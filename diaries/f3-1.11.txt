@@ -1,0 +1,21 @@
+创建时间：	2018/1/19 星期五 下午 6:48
+
+一.数据库连接池
+会在程序启动时,根据配置自动创建并管理数据库连接
+1.两种配置方式
+a)服务器级别
+①把数据库驱动包放入服务器目录的lib目录下
+②修改conf目录下的context.xml文件,在其中配置数据源
+b)项目级别
+①添加数据库驱动jar包至项目
+②往META-INF目录下创建context.xml文件并配置数据源
+2.数据源配置的内容
+在xml文件的Context节点中添加Resource子节点,并添加设置属性
+<Resource name="数据源名" auth="Container" type="javax.sql.DataSource" driverClassName="数据库驱动名" url="数据库连接路径" username="用户名" password="密码" maxActive="" //最大连接数,0表示无限制 maxIdle="" //数据库连接的最大空闲时间,超过空闲时间将会被标记为不可用并释放,0表示无限制 maxWait="" //建立连接的最大等待时间,超过将会异常,1表示无限制 />
+3.数据库连接的获取
+a)先获取数据源,在从数据源中获取连接
+Context context = new InitialContext();//获取JNDI的上下文对象Context
+DataSource ds = (DataSource) context.lookup("java:comp/env/数据源名");
+Connection conn = ds.getConnection();//从数据源中获取一个空闲的连接
+b)连接池对Connection中的方法进行了重写,例如close方法调用时会使连接返回连接池,而不是关闭
+c)数据源是由应用程序的服务器管理的,所以只有运行在服务器中的java web程序才可以使用

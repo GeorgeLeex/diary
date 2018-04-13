@@ -1,0 +1,28 @@
+创建时间：	2018/3/14 星期三 下午 4:21
+
+一.前端ajax接收中文数据变成中文乱码的解决方法: 后台调用响应对象response的setContentType()方法将其值设为"application/json;charset=UTF-8"
+二.使动态生成的元素受各种事件的影响,比如jquery的AutoComplete
+$(document).on('keydown.autocomplete', '选择器', function(){ $(this).autocomplete(options); });
+选择器与jquery的$('')中的格式一致, options可以为 
+{
+    //配置弹出框的数据
+    source:function(request, response) {
+        $.ajax({          
+            //ajax的参数配置
+            //request.term表示当前文本框的值
+            success:function(data){
+                //将响应的数据使用$.map()转换成一个一个对象返回,并存储在 ui这个数组对象中,
+                通过 ui.item.lable/value 访问每一个的值
+                response($.map(data, function(item){
+                    return{
+                        label:item.name值  //label为展示的内容
+                        value:item.name值  //value为其值
+                    }
+                }));
+            }
+        });
+    },
+    focus:function(event, ui) {
+        //获得焦点时将
+    }
+}

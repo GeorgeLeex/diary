@@ -1,0 +1,28 @@
+创建时间：	2017/12/13 星期三 下午 2:47
+
+一.触发器 Trigger
+根据用户的某个insert, delete, update 操作自动执行的一段SQL代码
+1.触发器的类型:
+before: 在向表添加数据之前执行
+after: 在表中添加完数据之后执行
+instead of: 替代触发器, 把一个操作用另一个操作替代
+2.两种临时表
+a) :new  存放要添加到表中的新纪录,进行insert, update操作该表中会有数据
+b) :old 存放从表中删除的旧数据,进行delete, update 操作该表中会有数据
+c) new和old这两张临时表的表结构和DML语句所影响的表结构一致,且操作完毕以后,这两张表消失
+3.触发器的创建
+create or replace trigger 触发器名
+after  //触发的时间
+insert [or update] [or delete]  //触发的事件
+on [用户.]表名  //在哪张表上创建触发器
+for each row  //每影响一行数据便执行一次触发器
+declare
+
+begin
+    //if-else语句
+    if inserting/updating/deleting then//对应增删改操作
+        // PL/SQL或SQL语句
+    else
+        
+    end if;
+end;

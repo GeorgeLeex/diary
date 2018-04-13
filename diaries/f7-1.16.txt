@@ -1,0 +1,67 @@
+创建时间：	2018/1/21 星期日 上午 11:22
+
+一.MVC模式
+1.模型Model:处理业务逻辑
+2.视图View:提供可交互的用户界面,向用户展示数据
+3.控制器Controller:处理客户端请求,根据请求来操纵模型并把响应结果经由视图展现给用户
+二.javabean
+1.与普通类的区别
+a)javabean必须提供空参构造方法
+b)属性必须私有化并提供getter/setter方法
+c)必须实现序列化接口Serializable
+2.jsp动作的getProperty和setProperty是通过该属性的getter/setter方法访问的
+3.如果页面控件的名称与javabean中的属性名相同,可以使用<jsp:setProperty name="属性名" property="*">把相同名的控件的值赋给该javabean的该属性
+4.jsp:forward转发
+a)当只转发一个页面时, <jsp:forward page="路径"/>
+b)当转发页面同时传参时, 
+<jsp:forward page="路径">
+    <jsp:param name="" value=""/>
+    ...
+</jsp:forward>
+也可以直接在url里传参
+5.动态包含与静态包含
+a)<jsp:include page=""> jsp动作动态包含
+b)<%@ include file=""%>指令静态包含
+c)区别:
+①动态包含是让每个页面各自翻译,各自编译,运行时才把编译的结果合并
+②静态包含是先把两个页面合并再一起翻译,编译再执行
+③静态包含的页面之间可以共享数据, 而动态包含不行
+④静态包含会出现命名冲突,而动态包含不会
+⑤静态包含不可以url传参,动态包含可以
+相同点:都会共用同一个request对象,其页面内容出现在_jspService方法中的顺序取决于它们出现在包含页面的顺序
+三.EL表达式
+1.主要用于访问存储在作用域中的对象及其属性,请求参数,cookie和其它请求报文中的信息
+2.访问作用域中对象的属性的格式
+a) ${对象名.属性名} 或 ${对象名["属性名"]}
+该方式获取Map集合中的数据只需要使用 Map集合对象名.key 就可以获取 key值对应的value
+b)访问集合类型对象
+${集合对象名[索引]}, 访问Map集合还可以使用 ${集合对象名["key"]}
+c)访问指定作用域中的对象
+${[pageScope|requestScope|sessionScope|applicationScope].对象名}, 当不指明作用域时,则根据作用域范围从小到大依次查找
+3.隐式对象
+a)四大作用域的隐式对象 pageScope,requestScope,sessionScope,applicationScope
+b)当前页面对象pageContext
+c)param为包含请求参数与对应字符串类型值的Map集合
+d)paramValues为包含请求参数与对应字符串类型值数组的Map集合
+d)header包含header名称和其对应字符串类型值的Map集合
+e)headerValues包含header名称和其对应字符串类型值数组的Map集合
+f)cookie:包含cookie名称和对应值的Map集合
+4.算术运算符,支持 + - * / %以及比较运算和逻辑运算, 其中+仅表示加法运算,不做字符串拼接,其两边必须是可以转化为数字的数据,否则编译失败
+5.${empty 表达式} : 判断其后表达式是否为空,为空则整个EL表达式的值为true,否则为false
+四.jstl标签
+1.使用
+a)导入jar包
+b)在jsp页面使用taglib指令引入:<%@ taglib prefix="前缀,通常为c" uri="路径"%>
+c)通过指定前缀调用
+2.常用的jstl标签
+a)<c:if>
+属性:①test: 值为要判断的表达式
+        ②var: 可选,值为test的结果
+        ③scope: 可选,指定var属性的作用域
+b)<c:forEach>
+属性:①items: 值为要迭代的集合对象名
+        ②var: 其值代表每一个迭代的集合中的对象
+        ③varStatus: 其值代表循环变量,该变量包含两个属性,index表示当前索引, count表示当前循环的个数
+        ④begin:其值为迭代开始的下标
+        ⑤end: 迭代结束的下标
+        ⑥step: 其值为每次迭代下标增长的值

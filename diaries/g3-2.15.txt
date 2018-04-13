@@ -1,0 +1,41 @@
+创建时间：	2018/2/15 星期四 下午 2:01
+
+一.注解Annotation
+对代码的一种描述说明,也称为元数据
+元注解...
+[public] @interface 注解名 {
+    注解元素...
+}
+1.基本内置注解
+a)@Override:用于描述被重写的方法,标记了该注解的方法若在父类中不存在则编译无法通过
+b)@Deprecated:表示某个方法已被弃用.不建议使用
+c)@SuppressWarning:抑制,忽略警告信息
+d)@SafeVararg:当使用参数类型是泛型的可变参数时会出现警告,此时需要使用该注解来使其被忽略
+e)FunctionInterface:用于描述函数式接口,函数式接口指的是该接口有且只有一个抽象方法.此时则可以使用该注解来修饰
+2.元注解 : 用于描述注解的注解
+a)@Target:用于表示该注解所描述的类型
+    ①ElementType.TYPE:能修饰类,接口或枚举类型
+    ②ElementType.FIELD:能修饰成员变量
+    ③ElementType.METHOD:能修饰方法
+    ④ElementType.PARAMETER:能修饰参数
+    ⑤ElementType.CONSTRUCTOR:能修饰构造器
+    ⑥ElementType.LOCAL_VARIABLE:能修饰局部变量
+    ⑦ElementType.ANNOTATION_TYPE:能修饰注解
+    ⑧ElementType.PACAKAGE:能修饰包
+b)@Retention:描述注解的生命周期
+    ①RetentionPolicy.SOURCE:该注解只能存在于java源码中,编译后的class字节码文件中没有
+    ②RetentionPolicy.CLASS:该注解在编译后的字节码文件依然存在.但运行后不存在.为@Retention的默认值.当没有显示指定@Retention          时就是这种类型
+    ③RetentionPolicy.RUNTIME:该注解在运行后依然存在.当需要利用反射在程序运行时获取注解信息则需要使用该元注解
+c)@Inherited:被该元注解修饰的注解具有继承性,如果父类使用了某个被元注解@Inherited修饰的注解.那么其子类自动被该注解修饰
+d)@Documented:被该元注解修饰的注解会出现在代码生成的API文档上.
+3.注解元素
+用于存放注解信息,格式为: 数据类型 数据名() [default 默认值];
+可以通过注解对象名.数据名()的方式获取
+二.注解与反射
+以下三个方法类的每个元素都可以使用:Class, Method, Field...
+1.判断某个元素是否应用了某个注解通过isAnnotationPresent方法判断
+public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){}
+2.获取指定类型的Annotation注解对象
+public <A exntends Annotation> A getAnnotation(Class<A> annotationClass){}
+3.获取所有注解
+public Annotation[] getAnnotations(){}

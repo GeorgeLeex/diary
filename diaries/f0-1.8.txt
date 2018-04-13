@@ -1,0 +1,16 @@
+创建时间：	2018/1/16 星期二 下午 6:27
+
+一.WEB
+1.核心
+①统一资源标识符URL(Uniform Resource Locator),描述资源地址的一种标识方法,组成: 协议+服务器地址(端口)+具体资源路径
+②超文本传输协议HTTP(HyperText Transfer Protocol),负责规定浏览器和服务器怎样相互交流
+③超文本标记语言HTML,告诉浏览器向用户展示什么样的内容
+二.Java EE
+1.简介:Java企业级开发的一个平台, 是一种框架和标准
+2.核心技术
+a)JDBC(Java DataBase Connectivity):Java数据库连接,用于在Java中连接各种数据库,是各种持久化框架的核心
+b)JNDI(Java Naming and Directory Interface):Java命名和目录接口,通过一个名称找到对应资源的技术
+c)JSP(Java Server Page):Java服务端页面,用于动态生成页面,设计理想是页面无java脚本
+d)Servlet:一个运行在服务器端用于处理请求并响应的Java程序,是MVC框架中的核心控制器
+e)XML(Extensive Markup Language):可扩展标记语言
+g)EJB(Enterprise Java Bean):企业级javabean

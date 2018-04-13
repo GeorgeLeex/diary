@@ -1,0 +1,36 @@
+创建时间：	2018/1/16 星期二 下午 7:39
+
+一.servlet
+一个运行在服务器端处理客户端请求并响应的java程序
+1.创建servlet
+a)继承HttpServlet并重写doGet或doPost方法,HttpServlet专门处理http协议
+b)继承GenericServlet并重写service方法,该serlet不遵守任何协议
+c)实现Servlet接口,实现init, service, destroy方法
+2.servlet生命周期
+a)加载类
+b)实例化(调用构造方法创建对象),servlet必须提供无参构造方法
+c)初始化.调用init方法
+d)服务,调用service方法
+e)销毁,调用destroy方法,该方法不一定会执行,倘若强制关闭服务器就不会执行
+ps:一个servlet开始于客户端对它的请求,销毁于服务器刷新或关闭时,服务器通常会间隔性的刷新.生命周期中除了service方法会调用多次以外,其它的方法都只会调用一次,且servlet中的所有方法都是由服务器调用的
+3.servlet中的doGet方法和doPost方法是由HttpServlet中的service方法根据客户端提交数据的method来决定调用的.如果重写了service方法,那么必须在重写的service方法中添加super.service(request,response)
+4.web容器为每一个请求创建一个线程,在线程中创建请求和响应的对象,通常情况下,一个servlet类只创建一个实例,所有线程共享一个servlet实例,所以通常禁止在servlet中使用全局变量,如果使用了则必须在service方法中重新赋值
+5.http请求常用的两种方式:get和post
+a)仅当form表单中的method为post或采用post方式提交时,其它都默认是get,例如超链接的href,location.href,form表单的method
+b)get和post的区别
+①安全性:
+get会在地址中显示提交的数据,不安全.
+post不显示,安全
+②数据容量
+get提交其url长度会受浏览器与服务器的限制
+post理论上没有长度限制
+③中文的处理
+get提交的数据中文处理需要先使用getBytes方法转换为iso-8859-1编码格式的字节,再重新组建为utf-8编码格式的数据
+post的中文处理只需设置request.setCharacterEncoding("UTF-8")
+④请求速度:get的请求速度比post要快
+⑤是否可以添加为收藏或邮件发送
+get可以实现,post不可以实现
+大多数情况下使用post方式,因为get方式无法传递中文
+二.Tomcat
+1.增加虚拟目录
+修改conf目录下的server.xml文件,添加<Context path="虚拟路径" reloadable="true" docBase="物理路径"/>. 可以通过访问该虚拟路径访问到物理路径上的资源

@@ -1,0 +1,67 @@
+创建时间：	2018/1/19 星期五 下午 6:48
+
+一.jsp
+1.jsp的作用
+实现表示逻辑与业务逻辑的分离,代替servlet完成页面的展示
+2.jsp的工作原理
+jsp最终会被翻译为servlet类,最终是以servlet对象的形式工作着,jsp实质上依然是个servlet
+3.jsp的生命周期
+a)翻译:当客户端请求访问一个jsp页面时,jsp容器先检验jsp页面的语法是否正确,然后将其翻译为servlet源文件
+b)编译:调用javac工具类编译servlet源文件生成字节码文件
+c)加载类:servlet容器加载被编译的servlet类的字节码文件
+d)实例化类
+e)调用jspInit()方法进行初始化
+f)调用_JSPService()方法处理客户端请求,容器会为每一个请求创建一个线程并调用该方法
+g)jspDestroy()方法的调用,当服务器调用该方法后,只是把jsp的对象销毁,并不会销毁jsp页面转换的字节码文件
+4.当第一次加载jsp页面时,需要将jsp文件转换为servlet类,所以响应速度较慢.当再次请求时,会直接执行第一次请求产生的servlet类,不需要重新转换jsp页面所以执行速度要快
+5.jsp的结构
+a)静态内容:html,css以及js
+b)动态内容
+①指令:以"<%@"开始,以"%>"结束, page,taglib,include
+②脚本元素
+i.表达式: <%=java表达式 %>,用于在jsp页面输出结果
+ii.小脚本scriptlet: <% java代码 %>
+iii.声明: <%!声明 %>,用于在jsp页面中定义变量或方法
+③动作: <jsp:动作名></jsp:动作名>
+④EL表达式
+⑤自定义标签:jstl标签
+6.组成部分翻译时所对应的位置
+a)静态内容:所有内容添加到_jspService()方法中,作为out.write()的参数使用
+b)动态内容
+①小脚本scriptlet:直接作为_jspService()方法中的一段代码
+②声明:放在_jspService()方法外面,声明的变量成为成员变量
+③表达式:放在_jspService()方法中作为out.write()的参数使用
+7.jsp预定义变量,9大内置对象
+a)HttpServletRequest---request:当前请求对象
+b)HttpServletResponse---response:当前响应对象
+c)HttpSession---session:当前请求的客户的会话对象
+d)JSPWriter---out:当前响应对象的输出流
+e)ServletContext---application:web应用对象
+f)PageContext---pageContext:封装当前请求内此jsp页面信息的对象
+g)Object---page:指向页面本身,相当于this
+h)ServletConfig---config:与当前页面的servlet对应的ServletConfig对象
+i)Throwable---exception:抛出的Throwable对象,仅当<%@ page isErroPage="true"%>时才有效
+对象可以存放在application,session,request,pageContext四个作用域中,如果把数据放在pageContext中,那么相当于_jspService()中的局部变量,作用域范围application>session>request>pageContext
+8.jsp指令
+a)page:定义jsp页面的某些属性,一个页面可以有多个page指令,但其中的每个属性除了import都只能出现一次
+属性:
+①language:指定文件所使用的脚本语言,仅java有效
+②import:指定导入的jar包
+③contentType:指定响应结果的类型和字符编码, contentType="响应类型;字符编码",响应类型默认为text/html,字符编码默认为iso-8859-1
+④pageEncoding:定义输出流的字符集编码,默认为iso-8859-1
+⑤errorPage:指定当发生异常时,重新定向至哪个页面
+⑥isErrorPage:表示此网页是否为处理异常的网页,值为true或false
+b)include:包含其他文件
+<%@ include file="文件名"%>
+c)taglib:允许jsp页面中使用自定义标签
+<%@ taglib prefix="前缀" uri="uri" %>
+二.乱码处理
+1.Servlet中设置请求报文和响应报文的编码方式
+request.setCharacterEncoding("UTF-8");
+response.setCharacterEncoding("UTF-8");
+2.jsp的page指令声明统一输出字符集编码:属性contentType="text/html;charset=UTF-8"
+3.HTML代码声明中统一输出字符集编码
+<head>标签中添加<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+4.设置数据库字符集
+5.将需要读写的文件字符集设为UTF-8
+6.设定服务器的字符集

@@ -1,0 +1,3085 @@
+h6-04.12
+创建时间：	2018/4/12 星期四 下午 1:58
+
+一.Mock测试:模拟web请求
+1.在测试类上标注@WebAppConfiguration, @RunWith(), @ContextConfiguration注解,@ContextConfiguration注解的locations属性需要两个值,spring的配置文件路径以及SpringMVC配置文件的路径
+2.添加成员变量WebApplicationContext并添加@AutoWired注解
+3.为MocMvc对象进行初始化, MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(WebApplicationContext对象).build();
+4.MockMvc对象的perform方法需要传入一个MockHttpServletRequestBuilder对象,该对象需要通过MockMvcRequestBuilders的get或post方法获取,不同方法表示不同类型的请求,但这些方法都需要传入一个字符串的uri,表示请求路径;MockHttpServletRequestBuilder对象的param方法的参数表示此次请求所传递的参数.
+5.perform方法依然返回MockMvc对象,其andReturn方法返回MvcResult对象,该对象包含了此次请求的结果,其getRequest方法可以返回一个MockHttpServletRequest对象,通过该对象可以得到request域中的数据
+h5-04.09
+创建时间：	2018/4/9 星期一 下午 5:32
+
+一.自定义转换器
+1.创建自定义转换器类并实现Converter<S, T>接口，泛型S为原类型，T为目标类型，需要在实现接口时指定泛型实际类型；实现其中的convert方法
+2.在IoC容器中注册ConversionServiceFactoryBean，并设置converts属性，其值为Set类型，所以需要在<set>标签中添加自定义转换器bean，指定其class属性
+3.在<mvc:annotation-driven>标签中设定conversion-service属性，其值为factorybean的id，<mvc:annotation-driven conversion-service="factorybean的id"/>
+此时就可以将页面前端数据按自定义转换器的实现转换数据
+二.关于<mvc:annotation-driven>
+1.添加给标签会自动注册RequestMappingHandlerMapping、RequestMappingHandlerAdapter与ExceptionHandlerExceptionResolver这三个bean，并提供conversion-service支持对表单数据的自定义转化，以及@NumberFormat，@DateTimeFormat注解对数据的格式化，以及使用@Valid注解对bean的验证，以及@RequestBody和@ResponseBody注解使用的支持
+2.添加<mvc:default-servlet-handler>注解可以解决DispatcherServlet对静态资源的拦截，但只添加该标签时会没有请求映射适配器，导致无法解析请求映射，所以同时需要添加<mvc:annotation-driven>标签来提供RequestMappingHandlerAdapter
+三.@InitBinder注解
+1.被@InitBinder注解标注的方法可以对WebDataBinder对象进行初始化，可以设定数据的绑定规则
+2.@InitBinder标注的方法不能有返回值，且方法的参数通常是WebDataBinder，比如调用该对象的setDisallowedFields(String...)设定某些字段不进行绑定
+h4-04.05
+创建时间：	2018/4/5 星期四 下午 4:52
+
+1.若重载方法的参数列表都只有一个可变参数时，调用方法时若不传参会报错，此时编译期无法知道调用哪一个方法，应该只在重载方法的一个版本上使用可变参数。
+2.方法调用绑定，将一个方法的调用与一个方法主体进行关联称之为绑定
+①前期绑定：若在程序执行之前进行绑定则称之为前期绑定
+②后期绑定：在运行时根据对象的类型进行绑定，也称之为动态绑定或运行时绑定，java中除了static和final方法（private方法属于final方法）外，都是后期绑定。
+3.在父类构造器调用方法时，若已被子类重写则也会发生多态调用，但此时子类的成员还没完成初始化，任然是默认值，所以会产生不可预估的效果。编写构造器时有一条准则：“尽可能简单的使对象进入正常状态，若果可以的话，避免调用其它方法。”在构造器中为一能够安全调用的方法是父类中的final方法。
+4.接口和类可以相互嵌套，接口中也可以嵌套接口，嵌套在类中的接口不再只可以拥有public和default的可视性，还可以使用private，但private接口不能在定义它的类之外被实现；但是嵌套在接口中的接口依然只能是public或default的；当实现某个接口时，并不需要实现其内部嵌套的任何接口
+h3-04.03
+创建时间：	2018/4/3 星期二 下午 9:26
+
+一.@RequestMapping注解
+1.直接在类或方法上使用且类上没有该注解时表示请求路径相对于根目录
+2.方法上有且类上也有该注解时，方法上的路径是相对于类上的
+3.属性
+a）value：表示请求路径，只有该属性时可以不指定属性名直接填值，支持Ant风格的URL，？表示一个字符，*表示任意字符，**匹配多层路径
+b）method：HTTP请求类型，值为枚举RequestMethod，比如RequestMethod.GET，RequestMethod.PUT
+c）params：表示对请求参数的限定，支持简单的表达式，比如要求请求中的包含什么参数 params={"username","password"}, 不含什么参数 {"!sex"} 参数为什么值 {"username=lee"}
+d）headers：表示对请求头中参数的限定，与params类似
+二.@PathVariable注解
+1.请求路径中可以使用占位符的格式将路径的一部分变为变量，而PathVariable注解可以将那些变量的实际值传入方法的入参处
+比如请求路径 @RequestMapping（"{id}/login"）,此时可以给参数列表的参数使用@PathVariable（"变量名"）注解将其实际值与被该注解修饰的参数绑定
+三.REST风格的请求路径
+1.REST风格下常用的请求方式的含义：
+a）GET：获取    b）POST：更新或添加    c）PUT：添加    d）DELETE：删除
+浏览器form表单默认值支持GET请求与POST请求，要想使用其它请求需要在web.xml文件下配置一个spring提供的过滤器-HiddenHttpMethodFilter，这个过滤器可以将POST请求转换为其它请求，内部实现是通过获取请求参数 _method的值，根据其值将请求转换为指定的请求，所以可以在form表单中添加一个隐藏域<input type="hidden" name="_method" value="PUT">
+四.@RequestParam注解
+1.修饰参数列表的参数使其与请求数据绑定
+2.属性
+a）value：属性名    
+b）require：默认情况修饰了该注解的参数不能为空，如果请求参数中不包含该值则会报异常；将其设为false时若没有指定参数则会将一个null值赋给被绑定的参数，但如果被绑定的参数不接受null值（比如int类型）则也会异常，此时可以用包装类型
+c）defaultValue：默认值，当请求参数中不包含指定值时会将该值赋给被绑定的参数
+3.使用javabean作为方法入参接收数据时，会自动将请求中的数据添入bean中名字与之对应的属性，可以级联的为属性赋值，比如当一个bean中关联了另一个bean时，为另一个bean的属性自动赋值要求前端数据名为 bean名字.属性名
+五.@SessionAttributes注解
+将隐含的Model中的数据放入session域
+属性：a）values：Model中那些要添入session域中的数据的名字
+          b）types：Model中那些要添入session域中的数据的类型
+
+六.@ModelAttribute注解
+1.所有的标注了@ModelAttribute的方法都会在@RequestMapping方法之前被调用
+注解了@ModelAttribute方法的执行流程
+a）首先调用@ModelAttribute标注的方法，然后将Model中数据放在implicitModel中
+b）解析请求所对应的方法的入参，其入参来自WebDataBinder对象的target属性
+①WebDataBinder对象的创建需要两个属性
+i）objectName：使用该值与到时候要传入到方法入参的实际值相绑定，若方法入参使用了@ModelAttribute标注，则objectName为其注解的value属性，若没有标注，则默认为类名首字母小写后的字符串
+ii）target：若implicitModel存在objectName这个key，则target为implicModel中该key对应的value值；若不存在，则验证当前handler是否使用了@SessionAttributs注解，若使用了且包含了objectName则会往session中获取objectName对应的value值，获取不到会报异常；如果当前handler也没使用@SessionAttributes注解，则会通过反射创建对应的对象
+c）springMVC将表单中的数据赋给WebDataBinder对象的target属性对应的对象
+d）springMVC将WebDataBinder对象的objectName和target属性放入implicitModel中，方便将其传入request域
+e）springMVC将WebDataBinder对象的target属性的值作为参数传递给方法的入参
+
+2.修饰有返回值的方法时，表明将该方法的返回值添入model中，如果没有为该值指定名称的话，隐式的会将名称设为该返回值类型的小写
+3.当该注解修饰的方法同时被@RequestMapping修饰的话，此时方法的返回值会被作为model的一个属性，而不是视图名
+4.往model中添入数据还可以在方法参数列表中添加一个Model类型的参数
+
+七.通常页面都是放在WEB-INF下，只能通过控制器转发，无法直接访问，此时可以在spring配置文件下添加<mvc:view-controller path="访问路径" view-name="视图名，无需添加前缀后缀"/>就可以直接通过访问路径访问到视图，而不用经过控制器，当使用了该标签时，需要同时添加了<mvc:annotation-dirven/>标签，否则会导致其它访问映射出现问题
+
+八.视图：渲染模型数据，将模型里的数据以某种形式展现给前端
+常见的视图实现类
+1.InternalResourceView：将jsp或其它资源封装为一个视图，InternalResourceViewResolver的默认实现类
+2.AbstractXlsView/AbstractXlsxView：Excel文档视图的抽象类，基于POI构造Excel文档，需要导入POI的jar包，然后自定义bean继承该抽象类实现buildExcelDocument方法，利用模型数据和WorkBook对象构建Excel文档，若想要使其可以下载，需将响应头的Content-Disposition属性设为attachment;filename=xxx.xls 即调用方法入参中的HTTPServletResponse对象的setHeader方法。需要使用BeanNameViewResolver解析器
+3.AbstractPdfView：PDF文档视图的抽象类，基于iText构建PDF文档
+4.MappingJackson2JsonView：将模型数据通过Jackson框架一个json格式输出
+
+九.常用的视图解析器实现类
+视图解析器用于将视图逻辑解析为一个具体的视图对象
+1.InternalResourceViewResolver：将视图名解析为一个URL文件，一般用于映射jsp等文件
+2.BeanNameViewResolver：将视图名解析为一个bean的id，如果对应id的bean实现类View接口且在spring容器注册了，则表示以该bean渲染视图
+3.JasperReportsViewResolver：JasperReports是一个基于Java的开源报表工具，该解析器将视图名解析为报表文件对应的URL
+多种视图解析器可以混合使用，每个视图解析器都实现了一个Ordered接口并开放了order属性，可以通过指定视图解析器的order属性值来指定解析的优先级，order值越小优先级越高，springMVC会根据优先级顺序对视图名进行解析，一般建议使用频率低的视图解析器的优先级设置高一点.
+h2-04.02
+创建时间：	2018/4/2 星期一 上午 9:23
+
+一.内部类
+1.静态内部类：存在于类中，方法外的一个静态类，static class className{}
+①主要特点：可以访问外部类中的静态变量及方法，即使是私有的
+②创建方式：a)在外部类的外部构建：new Outer.Inner();
+                    b)在外部类的内部构建：new Inner();
+2.成员内部类（实例内部类）：没有static修饰的内部类
+①特点：a）成员内部类中不允许出现静态变量和静态方法的声明，但可以出现static修饰的常量
+             b）成员内部类可以访问外部类中的所有变量和方法，即使是私有的
+             c）如果内部类中出现了与外部类中同名的实例变量，在内部类中访问外部类的实例变量的格式：Outer.this.变量名
+②创建方式：a)在外部类的外部创建：new Outer().new Inner(); 要求外部实例必须先存在
+                    b)在外部类的内部创建：i) new Inner();  ii) this.new Inner();
+3.局部内部类：
+①特点：a）存在于外部类的方法体中，不能使用static修饰局部内部类。局部内部类中不能有静态成员
+             b）当所处的方法为静态方法时，不能访问外部类的非静态成员变量和方法；当所处的方法为实例方法时，可以访问外部类的所有变量和方法。
+             c）所处方法中的变量只能访问final修饰的。
+②创建方式：new Inner();
+4.匿名内部类
+①特点：a）没有名字的局部内部类
+             b）没有class，interface，implements，extends关键字
+             c）没有构造器
+             d）一般隐式的继承某一类或实现某一接口
+②使用方式：new 接口或抽象类(){  实现方法...  };
+h1-03.29
+创建时间：	2018/3/29 星期四 下午 9:47
+
+ 一.Mybatis配置
+
+<environments default="development"> //默认使用的环境environment的id
+    <environment id="development">
+        <transactionManager type="JDBC"> //JDBC表示使用jdbc的默认设置，MANAGED表示被托管，不提交不会滚，由容器来管理,默认它会关闭连接
+            //设置closeConnection属性为false可以组织其自动关闭
+            <property name="closeConnection" values="false"/>
+        </transactionManager>   
+        <dataSource type="POOLED">
+            <property name="driver" value="${driver}"/>
+            <property name="url" value="${url}"/> //出现乱码在url后拼接 ?useUnicode=true&amp;characterEncoding=utf8   p.s.&amp;代表在XML文件中&的转义
+            <property name="username" value="${username}"/>
+            <property name="password" value="${password}"/>
+        </dataSource>
+    </environment>
+    //别名配置
+    <typeAliases>
+        ①<typeAlias alias="别名" type="全类名"/> 
+        ②<package name="包名"/> //会扫描包下的所有bean并使用其首字母小写的类名作为别名
+        //mybatis内置类一些java类型别名， 基本类型为 _基本类型名， 基本类型的包装类型及其集合类型等为 全部小写的名字作为别名
+    </typeAliases>
+    <mappers>
+        ①<mapper resource="类路径下映射文件的位置"/>
+        ②<package name="包名"/>  //将包内所有接口注册为映射器
+    </mappers>
+</environments>
+
+二.Mapper XML文件
+1.select标签：查询语句
+属性参数：①parameterType：传入这条SQL语句的参数的全类名或别名
+                 ②resultType：预期返回的类型的全类名或别名，如果是集合的话，属性值为集合中元素的类型
+                 ③resultMap：外部resultMap的命名的引用
+                 ④flushCache：为true时任何时候调用该语句都会清空本地缓存以及二级缓存，默认为false
+                 ⑤useCache：设置为true时将会导致本条语句的结果被二级缓存，默认对select元素为true
+                 ⑥statementType：STATEMENT，PREPARED，CALLABLE中的一个，这条语句编译的类型，默认为PREPARED，当调用存储过程时需指定为CALLABLE
+2.insert，update， delete标签：插入/更新/删除语句
+属性参数：①flushCache：语句被调用时情况本地缓存以及二级缓存，插入，更新，删除语句都默认为true
+                 ②useGeneratedKeys：（仅对insert和update有用），会让MyBatis使用jdbc的getGeneratedKeys方法来取出数据库内部自动生成的主键值，例如mysql 的auto_increment，默认为false
+                 ③keyProperty：（仅对insert和update有用），Mybatis会通过getGeneratedKeys的返回值或者insert元素的子元素selectKey设置该列的值，该属性的值为表中主键的列名
+子元素selectKey属性：①keyProperty：selectKey语句结果要设置的属性的属性名
+                                    ②resultType：语句预期的返回类型
+                                    ③order：值为BEFORE或AFTER，为BEFORE会先执行selectKey的语句并将其值赋给keyProperty再执行插入语句；设置为AFTER会先执行插入语句，再执行selectKey的语句
+                                    ④statementType：同上
+3.sql：用于定义可重用的SQL片段
+①定义：<sql id=""> ${变量名} </sql> //定义这种属性名后当被其他元素引用时，引用时可以设置该变量的实际值,同时这种变量的声明也可以放在include元素的refid属性里。
+② 引用：其它元素(insert,update,delete,update,sql元素都可以)引用SQL片段时通过在元素内部添加<include refid="被引用的sql片段的id">子元素来实现，同时可以在include子元素中添加property子元素为SQL片段里的变量名赋值, <property name="SQL片段内部变量的变量名" value="" />
+4.parameterType
+①当传入一个复杂对象属性时，SQL语句中 #{属性名} 占位符的值会从传入的对象中根据其属性名进行寻找并赋给预处理语句的参数中，map集合也是如此
+②可以指定占位符属性的数据类型， #{属性名, javaType=java数据类型, jdbcType=数据库数据类型}, 通常javaType可以由参数对象确定。
+③对于小数类型，可以设置小数保留位数，比如 #{length, javaType=double, jdbcType=NUMERIC, numericScale=2}
+④mode属性可以指定IN，OUT，INOUT参数
+5.字符串替换：使用#{ }会被转义为 ？,但使用 ${ }不会被修改转义
+6.resultMap元素的高级结果映射
+①自身属性：a）id：该resultMap的id，用于引用
+                    b）type：类型全类名或类型别名
+                    c）autoMapping：开启自动映射，默认为false
+②子元素
+a）id和result：两者都能将列值映射到一个简单数据类型的属性，不过id是表示标识属性，result是表示普通属性
+    属性：i）.property：被映射的属性名
+              ii）：column：数据库中的列名
+b）association：将某一复杂数据类型结果映射到一个属性中
+    属性：i) property：对应的属性名   
+              ii) column：数据库中的列名  
+              iii) javaType：数据类型
+              iv) select：外部select语句的id，将其查询结果作为该属性的值
+              v) resultMap：外部resultMap的id，引用其他结果映射作为该属性的值
+              vi) columnPrefix：为引用的外部resultMap中的所有column列名添加前缀
+    子元素：<id /> <result />
+c）集合collection
+    属性：i) ofType：每个数据的类型
+              其余属性与association一致
+三.动态SQL
+1.if：<if test="条件判断表达式"> ... </if>
+2.choose,when,otherwise
+3.where：where元素只会在至少有一个子元素会返回SQL语句时才会去插入 where，且如果返回的语句开头是 AND或者 OR会将其剔除
+4.set：set元素会动态的给SQL语句前置一个SET，并会剔除无关的逗号
+5.foreach
+属性：①item：其值代表着本次迭代获取的元素，当遍历Map集合时，为value值
+          ②index：当前迭代的次数，当遍历Map集合时，为key值
+          ③collection：遍历的集合的数据类型
+          ④open：以什么字符开始
+          ⑤separator：间隔符，每次迭代后拼接的间隔符
+          ⑥close：以什么字符结束
+四.缓存
+1.一级缓存（本地缓存Local Cache）:每当一个SqlSession被创建，mybatis就会创建一个与之关联的本地缓存，任何在该SqlSession执行过的查询语句的结果都会被保存到本地缓存中，本地缓存会被增删改，提交事务，关闭事务以及关闭SqlSession所清空。
+2.二级缓存（Second Cache）：存储作用域为Mapper
+①开启：在mybatis配置文件的configuration元素的子元素settings中添加<setting name="cacheEnabled" value="true"/>,并在Mapper的xml文件中的mapper元素中添加<cache/>子元素，且POJO类必须实现序列化接口
+②设置select元素的useCache属性可以禁用当前select语句的二级缓存，即每次查询都会发出SQL去查询，默认为true。
+③在mapper的同一namespace下，如果有其他增删改操作数据后需要刷新缓存，不然会出现脏读，默认为true，即会刷新缓存
+五.注意事项
+1.当接口中的参数只有一个且类型为List或数组时，在xml文件中使用foreach时其collection属性分别为list和array，如果为Map集合则必须在接口的形参上为该参数加上@Param("name")注解,此时foreach的collection的属性为就为name，List集合或数组也可以用注解的形式标注。多个参数时应使用map集合存放
+h0-3.22
+创建时间：	2018/3/21 星期三 下午 8:32
+
+一.类加载器ClassLoader
+1.将类装入jvm的步骤
+①装载: 寻找并加载Class字节码文件
+②链接:a)校验: 检查Class字节码文件数据的正确性
+           b):准备: 给类的静态变量分配存储空间
+           c):解析:将符号引用转换为直接引用,将那种通过名字的引用转换成内存地址
+③初始化:对类的静态变量,静态代码块进行初始化.
+2.jvm运行时期会产生三个加载器:根加载器BootstrapClassLoader, ExtClassLoader, AppClassLoader,根加载器负责装载jre的核心类库, ExtClassLoader负责加载jre的扩展目录ext下的jar包, AppClassLoader负责加载类路径下的jar包,三个加载器中ExtClassLoader和AppClassLoader是ClassLoader的子类, 这三个加载器存在着父子关系,根加载器是ExtClassLoader的父加载器,ExtClassLoader又是AppClassLoader的父加载器
+3.jvm加载类时使用全盘负责委托机制, 全盘负责: 是指当一个类加载器装载类时,除非指定使用其它的类加载器,否则该类所依赖及引用的类也由该类加载器加载
+委托机制: 是指首先委托父加载器去寻找目标类,只有找不到时才会从自己的类路径中查找并装载
+git remote add origin https://github.com/GeorgeLeex/crm2.git
+创建时间：	2018/4/6 星期五 下午 5:02
+
+git remote add origin https://github.com/GeorgeLeex/crm2.git
+g9-3.21
+创建时间：	2018/3/21 星期三 上午 9:39
+
+一.spring
+1.IoC容器:
+①BeanFactory(接口):轻量级的IOC容器,管理bean的生命周期及依赖关系,采用延迟加载bean, 在第一次使用getBean()时才会初始化Bean,其主要实现类为XmlBeanFactory,当父类引用指向该子类时才是延迟加载bean,不过现已过时
+②ApplicationContext(接口):BeanFactory的子接口,对其功能进行了扩展,在自身被实例化时一次性完成所有bean的初始化,其主要实现类:ClassPathXmlApplicationContext(寻找类路径下的配置文件), FileSystemXmlApplicationContext(寻找物理路径上的配置文件), spring的web模块是建立在该模块上的
+③WebApplicationContext: 通过WebApplicationContextUtils.getWebApplicationContext(ServletContext sc)获取,
+需要在web.xml文件中配置监听容器启动的监听器ContextLoaderListener以及初始化参数param-name:location, param-value: spring配置文件路径
+区别: BeanFactory启动时不会校验xml文件的正确性, 获取bean装配时错误会产生异常
+            ApplicationContext在启动时会校验xml文件,所以不会产生bean装配的错误
+            其实主要还是由实际指向的子类决定,XmlBeanFactory的一系列问题
+2.IoC容器管理的bean的生命周期
+①实例化bean
+②为bean进行注入初始化
+③基于spring对bean的使用
+④IoC容器对bean进行销毁
+3.实例化bean的方式
+①通过构造器实例化
+②通过静态工厂的方法进行实例化
+<bean class="工厂全类名" factory-method="创建实例的方法"/>
+③通过实例工厂的方法进行实例化
+a）配置工厂bean  <bean id="" class="工厂全类名"/>
+b) 配置bean实例化所需的工厂bean及方法
+    <bean id="" factory-bean="工厂bean的id" factory-method="工厂的bean方法"
+3.bean的命名和定义
+spring中bean的定义由BeanDefinition对象表示
+①id，name， class
+②lazy-init：默认为false，设置为true时只有第一次获取时才会加载， 可以在<beans>节点设置属性default-lazy-init为true使其所有的bean都采用延迟加载
+③scope：
+a）singleton：单例，所有的bean默认为singleton
+b）prototype：多例，每次获取都是一个新的对象
+c）request：每个request请求都为其创建一个单例实例
+d）session：没个session会话中为其创建一个单例实例
+d）globalSession： 全局session， session共享？    
+④depends-on
+bean的依赖：一个bean对另一个bean的依赖可以在xml文件中通过 ref属性或元素来引用，被依赖bean将在依赖bean之前被适当的初始化，depends-on可以在该bean初始化之前显示的指定强制让哪些被依赖bean进行初始化，可以同时指定多个， bean之间的名字使用逗号，空格或分号间隔
+4.IoC容器注入的方式
+①构造方法注入
+②属性注入，通过属性的set方法注入
+③注解的方式注入
+④接口注入，spring不支持
+5.基于注解方式的注入
+① @Autowired
+只按照byType按照类型注入，默认情况下要求被依赖对象必须存在，设置该注解的required属性为false即为允许null值，如果想按照名称byName注入的话，需要与@Qualifier注解配合使用
+②@Resource
+有两个关键的属性 name和type。默认都不指定的情况下为byName查找，如果byName没有找到，则回退到byType查找；指定了name属性则byName；指定了type则byType，如果同时指定了name和type，则会往容器中寻找唯一匹配的bean； 找不到都会抛出异常
+③二者的共同点：都可以使用在字段或set方法上，如果使用在字段上了，那么不再需要写setter方法了
+6.依赖注入的三种配置方式
+①xml文件：类型不安全，所配置的bean的对象可能会因为失误配置成其他类而导致问题，自由度低，但修改配置不需要重新编译且不会侵入代码
+②注解：
+a)实现方式：i）在需要实例化的组件类上添加@Component
+                    ii）告诉spring哪些包是需要扫描并自动装配的，创建一个配置类，在类上添加@Configuration和@ComponentScan注解，并为@Component的basePackageClasses的属性赋值，其值为一个class数组，表明spring会扫描这些类所在的包，然后就可以在需要的地方使用@Autowired或@Resource注入了。p.s. 测试时需要将测试类上的@ContextConfiguration注解的locations属性替换为classes，其值为配置类的class
+b)优缺点：方便简洁，类型安全，但会侵入代码，且需要重新编译class文件，自由度低
+③Java Config：
+a)实现方式：只需要创建一个配置类，在类上使用@Configuration注解，然后在配置类编写返回要注入的对象的方法，并给这些方法加上@Bean注解，告诉spring为返回的对象创建实例，返回何种对象由自己指定，如果该类依赖某个对象，可以在方法的入参中添入需要的对象参数，若有其它注解了@Bean的方法返回值为其所需要的类型，则会自动注入到该方法的入参处，然后可以由此构建自己需要的对象了。
+b)优缺点：类型安全，不需要重新编译，不会入侵代码且自由度高
+④三种方式的选择：xml配置优势在于修改后不需要重新编译，适用于那些经常需要切换实现类的对象；注解简洁方便，为首选；当需要注入的对象不是自己维护的第三方jar包中的类时，这时需要用到Java Config。
+二.AOP
+1.基于XML配置的AOP
+①创建并在IoC容器中注册切面类
+配置如下
+<aop:config>
+    //定义切面
+    <aop:aspect id="" ref="切面bean的id"/>
+    //定义切点
+    <aop:pointcut id="" expresion="拦截表达式"/>
+    //定义通知，共五种通知: before， after， after-throwing， after-returning， around
+    <aop:before pointcut-ref="切点名" method="通知方法名"/>
+    //如果是返回值通知，则返回值通知的方法可以在参数列表中可以添加一个参数代表返回值，然后xml的配置中需要为其元素添加returning属性，值为参数名，当符合切点中连接条件的方法被调用时可以在返回值通知中获取该值，但是当返回值通知方法的参数列表中参数类型与被调用方法返回值类型不兼容时不会触发该通知， 如果返回值通知方法参数列表的参数类型为Object，那么方法返回值为void的方法被调用也会触发该通知，得到null。
+    //异常通知亦如此，在异常通知方法参数列表中添加一个参数代表异常类型，其xml文件配置相应的throwing属性，值为参数名，当符合条件的被代理类的方法执行时，只有其抛出异常类型与异常通知参数列表中代表异常的参数的类型兼容时才会触发
+</aop:config>
+②通知方法的参数列表中可以添加一个类型org.aspectj.lang.JoinPoint的参数，通过该参数可以获取被代理类的信息
+a）getSignature()：获取被代理类当前执行方法的方法签名
+b）getTarget(): 获取当前被代理类
+c）getArgs(): 返回一个包含被代理类当前执行方法的实参的数组
+2.基于注解的AOP
+前置要求：
+①开启对AspectJ的支持，两种方式
+    a)在xml文件中配置<aop:aspectj-autuoproxy/>并在切面类上添加@Aspect注解
+    b)在切面类上添加@Configuration和@EnableAspectJAutoProxy注解
+②为切面类和被代理类在容器中进行注册
+例子：切面类的配置
+@Aspect  //声明切面
+public class MyAspect{
+    //定义切点PointCut,设置对哪些方法进行拦截
+    @PointCut(vale = "execution(。。。)")
+    public void pointCut(){}  //该方法代表着一个切点，不能有返回值和参数，其方法名为该切点的标志名，为其后通知引用
+
+    //设定通知,通知有五种：Before，After，AfterThrowing，AfterReturning，Around
+    @Before(value = "pointCut()")  //前置通知,绑定切点
+    public void adviceBefore(){...}
+    //返回值通知需要给注解添加returning属性，其值为返回通知方法参数列表的属性名
+    @AfterReturning(pointcut="切点名", returning = "返回通知方法参数列表的形参名")
+    //异常通知 @AfterThrowing(pointcut="", throwing="")
+}
+3.切点标志符
+①execution：匹配符合要求的连接点(被代理类的方法)，最基本的标志符
+②within：匹配指定包下所有的连接，比如within(xyz.northsky.*),匹配xyz.nortysky包下的所有类的所有方法,within(接口名+)：匹配实现了指定接口的所有实现类的所有方法
+③bean：匹配名字为指定值的bean的所有方法
+④@annotation：匹配由指定注解标注的方法
+⑤args：匹配参数列表满足要求的方法，需要的是参数类型，e.g.  args(int, java.util.Map, ..)
+e.g. @After(value = "切点名() && args(name, age)")   //可以引用标注方法的参数列表中的参数名，但此时要求其与参数列表完全一致
+       public void afterAdvice(String name, int age) {...}
+       那么此时只有符合切点连接条件且参数列表为 String类型，int类型 的方法被调用才会触发该通知
+p.s. 切点标志符之间可以使用 || 或 && 组合使用，当通知注解中不指明引用的切点时可以在其value属性中进行拦截条件配置
+g8-3.20
+创建时间：	2018/3/20 星期二 上午 8:44
+
+一.xml文档中的xmlns(XML NameSpace):对XML文档中标签的命名制定的规范,为解决XML文档的冲突问题
+1.当标签中定义了xmlns, xmlns:prefix 这种属性时,xml文档中的标签名,属性名等都要符合xmlns右边的uri中指定的规范
+2.xmlns表示当前xml文档默认的命名空间,使用其中定义的标签名,属性名等定义时不需要添加前缀,
+  而xmlns:prefix这种带了前缀的命名空间,使用其中的定义时需要添加指定的前缀,格式: prefix:xxx
+3.对xml文档的定义实际上是由xsd(XML Schema Definition)文件来定义的, 通常某一命名空间下有多个xsd文件, 所以需要指定它究竟使用哪个xsd文件,
+这时可以引入另一个命名空间, 通常前缀设为 xsi(即为XML Schema Instance的意思), xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+它其中有一个属性schemaLocation用以指定某一命名空间使用哪一个xsd文件, 格式: xsi:schemaLocation="命名空间uri xsd文件uri", 命名空间uri与xsd文件uri之间使用空格分隔, xsd文件通常就在命名空间uri的下一级目录, 这样就可以指定命名空间使用哪个xsd文件了
+
+二.
+1.关于String的replace, String有重载的两个replace方法, 
+replace(char oldChar, char newChar)   
+replace(CharSequence target, CharSequence replacement)
+两个方法都会会返回一个新的字符串,即为替换之后的字符串
+ p.s. CharSequence:一个顶级的接口, 其已知实现类有String,StringBuffer,StringBuilder
+2.HashMap有个方法叫做values, 返回一个包含所有value的Collection集合
+g7-3.19
+创建时间：	2018/3/19 星期一 上午 11:17
+
+1.一定要使用预编译的sql语句，将页面数据直接拼入sql语句会带来意想不到的后果
+2.当你使用js的history.back等操作回退时，上一个页面域中的数据依然会存在
+g6-3.14
+创建时间：	2018/3/14 星期三 下午 4:21
+
+一.前端ajax接收中文数据变成中文乱码的解决方法: 后台调用响应对象response的setContentType()方法将其值设为"application/json;charset=UTF-8"
+二.使动态生成的元素受各种事件的影响,比如jquery的AutoComplete
+$(document).on('keydown.autocomplete', '选择器', function(){ $(this).autocomplete(options); });
+选择器与jquery的$('')中的格式一致, options可以为 
+{
+    //配置弹出框的数据
+    source:function(request, response) {
+        $.ajax({          
+            //ajax的参数配置
+            //request.term表示当前文本框的值
+            success:function(data){
+                //将响应的数据使用$.map()转换成一个一个对象返回,并存储在 ui这个数组对象中,
+                通过 ui.item.lable/value 访问每一个的值
+                response($.map(data, function(item){
+                    return{
+                        label:item.name值  //label为展示的内容
+                        value:item.name值  //value为其值
+                    }
+                }));
+            }
+        });
+    },
+    focus:function(event, ui) {
+        //获得焦点时将
+    }
+}
+
+g5-3.9
+创建时间：	2018/3/9 星期五 下午 7:02
+
+数据库中char类型的字段长度设置为2的话,单个数字或字母的值查出来后面还有个空格,这个空格会导致el表达式中对该值的判断操作永远为false,  be careful!
+g4-2.25
+创建时间：	2018/2/25 星期日 上午 11:08
+
+一.数据库范式
+1.六种范式:第一范式,第二范式,第三范式,巴斯-科德范式,第四范式,第五范式
+2.第一至三范式
+①第一范式:数据库表的每一列都是不可分割的原子数据项,而不能是集合或数组.
+②第二范式:在1NF的基础上,表中的非主属性必须对码完全依赖,不能部分依赖
+③第三范式:在2NF的基础上,表中的非主属性不能相互依赖
+g3-2.15
+创建时间：	2018/2/15 星期四 下午 2:01
+
+一.注解Annotation
+对代码的一种描述说明,也称为元数据
+元注解...
+[public] @interface 注解名 {
+    注解元素...
+}
+1.基本内置注解
+a)@Override:用于描述被重写的方法,标记了该注解的方法若在父类中不存在则编译无法通过
+b)@Deprecated:表示某个方法已被弃用.不建议使用
+c)@SuppressWarning:抑制,忽略警告信息
+d)@SafeVararg:当使用参数类型是泛型的可变参数时会出现警告,此时需要使用该注解来使其被忽略
+e)FunctionInterface:用于描述函数式接口,函数式接口指的是该接口有且只有一个抽象方法.此时则可以使用该注解来修饰
+2.元注解 : 用于描述注解的注解
+a)@Target:用于表示该注解所描述的类型
+    ①ElementType.TYPE:能修饰类,接口或枚举类型
+    ②ElementType.FIELD:能修饰成员变量
+    ③ElementType.METHOD:能修饰方法
+    ④ElementType.PARAMETER:能修饰参数
+    ⑤ElementType.CONSTRUCTOR:能修饰构造器
+    ⑥ElementType.LOCAL_VARIABLE:能修饰局部变量
+    ⑦ElementType.ANNOTATION_TYPE:能修饰注解
+    ⑧ElementType.PACAKAGE:能修饰包
+b)@Retention:描述注解的生命周期
+    ①RetentionPolicy.SOURCE:该注解只能存在于java源码中,编译后的class字节码文件中没有
+    ②RetentionPolicy.CLASS:该注解在编译后的字节码文件依然存在.但运行后不存在.为@Retention的默认值.当没有显示指定@Retention          时就是这种类型
+    ③RetentionPolicy.RUNTIME:该注解在运行后依然存在.当需要利用反射在程序运行时获取注解信息则需要使用该元注解
+c)@Inherited:被该元注解修饰的注解具有继承性,如果父类使用了某个被元注解@Inherited修饰的注解.那么其子类自动被该注解修饰
+d)@Documented:被该元注解修饰的注解会出现在代码生成的API文档上.
+3.注解元素
+用于存放注解信息,格式为: 数据类型 数据名() [default 默认值];
+可以通过注解对象名.数据名()的方式获取
+二.注解与反射
+以下三个方法类的每个元素都可以使用:Class, Method, Field...
+1.判断某个元素是否应用了某个注解通过isAnnotationPresent方法判断
+public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass){}
+2.获取指定类型的Annotation注解对象
+public <A exntends Annotation> A getAnnotation(Class<A> annotationClass){}
+3.获取所有注解
+public Annotation[] getAnnotations(){}
+
+g2-02.09
+创建时间：	2018/2/9 星期五 上午 9:43
+
+一.数据库存储过程-procedure
+1.语法:
+create [or replace] procedure 过程名 (变量名 in 数据类型, 变量名 out 数据类型)
+ //in的变量代表传入参数,out代表输出参数 
+is
+    //变量声明处
+begin
+    //pl_sql块
+end;
+2.使用:
+a)在plsql块中使用
+调用方式:
+存储过程名(传入参数名 => 值, 输出参数名 => 值);
+//当值与参数一 一对应时,可以不显示指明某个值所对应的参数名
+b)java中调用
+//定义sql语句
+String sql = "{call 存储过程名(?,?,?...)}";
+//创建CallableStatement对象
+CallableStatement call = conn.prepareCall(sql);
+//将对应的参数注册为输出参数
+call.registerOutParameter(索引或参数名, 数据类型OracleTypes.常量名);
+//为输入参数占位符赋值
+call.setObject(index, value);
+//通过CallableStatement的get方法获取输出参数
+call.getObject(index);
+
+g1-1.24
+创建时间：	2018/1/24 星期三 下午 9:40
+
+一.Servlet的规律
+1.doPost永远调用doGet
+2.doGet永远需要处理异常
+3.永远需要获取页面数据,生成DTO
+4.一定需要实例化Service
+5.对Service层的方法的调用结果需要反馈给页面
+6.向目标页面跳转
+二.控制器分离
+控制器分离将所有的Servlet按功能划分责任,其中一个控制器是核心,负责接收所有的请求然后将请求依据业务描述分配给其它业务控制器
+三.动态方法调度
+用父类变量引用子类的实例,父类变量决定做什么,子类的实例决定怎么做. 一般由接口的变量引用若干级后代的实例
+四.继承---多重继承,责任传递
+五.软件系统设计第一原则: OCP(Open-Close原则)
+软件系统对扩展开放,对修改关闭,基于该原则,当系统中扩充新功能时,不应该对原有内容存在影响
+g0-1.23
+创建时间：	2018/1/23 星期二 下午 7:27
+
+一.数据库
+1.主键:唯一标识一条数据且永不重复的列
+2.数值类型与字符串类型的使用规律
+对于可能会参与运算的列使用数值类型,否则使用字符串类型
+3.建议使用的数据库编码体系:层级编码---命名方式
+将一个系统分为层级结构并给每一层赋予一个标志性的名字,为某一层级下的数据命名时只需在名前拼上其上层(包括间接上级)的标志名即可
+太阳系-->地球-->亚洲-->中国
+    A            C         A         01
+
+ACA01
+二.分层体系架构
+  
+同一层及相邻层之前可以访问, 但是不能越层访问
+三.架构设计的第一原则: 约定大于配置,大于技术实现;事先的规划大于事中的实施,也大于事后的问责
+四.软件系统中角色的划分
+1.调用者: 负责发送正确的指令
+2.执行者: 负责执行指令并反馈结果
+五.http报文的结构
+1.GET: 报文头的编码格式采用iso-8859-1, 报文体(数据区)的编码格式也是iso-8859-1,所以get提交无法处理中文
+2.POST: 报文头采用iso-8859-1, 报文体的编码格式使用的是页面所指定的编码格式
+f9-1.22
+创建时间：	2018/1/22 星期一 下午 8:01
+
+一.html5的一些特性
+1.input文本框的autofocus:进入页面时会将光标至于设置了该属性的文本框上
+2.required:输入校验,当提交数据时,该项必须有值
+3.type为number的input文本框要求必须输入数值型数据,通过文本框右边的按钮增减数值默认为向上或向下取整,可以通过设置step属性的值使其保留至几位小数, 0.01表示保留两位小数
+二.关于继承
+语法上的定义:
+1.抽象类可以继承普通类
+2.普通类可以继承抽象类
+3.接口可以继承接口,且可以同时继承多个接口
+语义上通常不建议使用普通类作为父类,而建议使用抽象类作为父类让子类继承,因为普通类复杂的继承关系会导致过多无用父类的实例化,占用内存,而抽象类因为无法实例化所以并不会因此产生过多的无用父类
+三.关于HashMap
+1.HashMap的默认初始容量为16,即16个Hash桶,HashMap使用一个个Hash桶来存放键值对, 默认的加载因子为0.75,HashMap的安全容量为容量的极限大小乘以加载因子,当存放的数据超过HashMap的安全值时,便会进行扩容,每次扩容均为之前的一倍.
+2.影响HashMap性能的两个因素:一是初始容量,二是加载因子
+3.内存虚耗问题:申请了过多内存却没有充分情况,使用HashMap时可能会出现这种情况,比如在默认情况下,HashMap只存放了13个数据,由于超过了安全值,所以HashMap扩容为32,安全值为24,但其中有11个Hash桶是完全空置的,这就导致了内存虚耗
+3.解决内存虚耗的方法
+当我们确定了所需存放数据的个数时,可以通过设置合理的初始容量的大小使其安全容量尽量能够存放数据来减少内存虚耗,通常不建议改变加载因子,0.75是一个折中的最优选择.
+假设数据个数为13, 其初始容量可以设置为数据个数除以加载因子再加上1然后强转为int类型,亦或是求出数据个数除以加载因子的值然后向上取整在强转为int类型,通常建议使用第一种
+四.一个类成为servlet的两个因素
+1.该类是HttpServlet的子类
+2.该类配置了Servlet的描述信息
+五,代码复用两种方式
+1.继承
+2.组合
+不要单纯的为了复用代码而去使用继承
+六.Javaweb程序的入口
+当将web程序发布到Tomcat上,在启动Tomcat时,会自动查找该项目的web.xml文件,并根据该文件的描述去加载执行程序,所以Javaweb程序的入口就是web.xml文件
+七.DTO
+指的是数据传输对象---Data Transfer Object, 负责在各个层级之间传递数据
+f8-1.17
+创建时间：	2018/1/21 星期日 下午 12:46
+
+一.ajax
+1.ajax指的是异步JavaScript及XML(Asynchronous JavaScript And XML),是一种页面无刷新的技术,在不刷新整个页面的情况下更新局部内容,是一种编程模式
+2.实现步骤
+a)获取XMLHttpRequest对象
+var xmlHttp;
+//判断window对象中是否有ActiveXObject属性的值,如果有则为低版本IE浏览器
+if (window.ActiveXObject) {
+    xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+} else {
+    xmlHttp = new XMLHttpRequest();
+}
+b)设置请求资源及处理响应结果的函数
+//提交方式为GET或POST 
+xmlHttp.open("提交方式", url, 是否异步);
+//设置xmlHttp请求状态码改变时的处理函数
+xmlHttp.onreadystatechange=function () {
+    //判断服务器状态
+    if (xmlHttp.readState == 4 &&            xmlHttp.status== 200) {
+        //获取响应内容,responseText为响应的文本,responsXML为响应的XML数据
+        var result = xmlHttp.responseText
+    }
+}
+//发送请求,如果为POST提交需要提交数据可以在send函数中传入进去,GET提交不需要,传入null即可
+xmlHttp.send();
+二.会话跟踪技术
+为了解决HTTP协议无状态性所导致的无法记录信息的问题
+1.URL重写:把一些信息以地址栏传参的形式在页面和控制器之间传递
+2.隐藏域:把一些信息写入到type为hidden的input标签中
+3.Cookie
+a)是服务器写在客户端中的文本数据,以键值对的形式存储
+b)一个域名通常只能写入一个cookie文件,其中可以写入多个cookie键值对
+c)Cookie的方法
+①.构造方法 Cookie(String key, String value), 其key和value不可以包含 [] () = , " / ? @ : ;这些字符, 且其key不能重复
+② getName( )获取cookie名,getValue( )获取cookie值, 一个cookie类似于一个键值对
+②.setMaxAge(int time);设置cookie对象的生命时长,如果不设置则默认为临时cookie,即浏览器关闭就消失.
+i.  time >0 ,写入硬盘中,单位为秒
+ii.  time = -1 ,表示为临时的
+iii. time = 0;表示cookie失效,使浏览器删除cookie
+d).向客户端发送cookie
+调用响应对象的addCookie(Cookie c)方法将Cookie放入响应报头
+e).从客户端读取cookie
+请求对象的getCookies()方法获取到一个Cookie数组,并通过cookie对象的getName()和getValue()获取cookie的key和value, 不管是否手动写入了cookie,总能获取一个key为"JSESSIONID", value为session的id值的临时cookie
+f).每一个浏览器都各自的cookie存放位置
+4.会话对象session
+a)作用
+保持同一个客户多次请求之间的联系,一个HttpSession对象唯一的属于一个用户,通过一客户的多次连接共享供一个会话对象
+b)当客户第一次请求时容器会生成唯一的会话ID---JSESSIONID,并以cookie的形式响应给客户端,之后客户端每次请求都发回这个ID,容器通过该ID找到对应的会话对象与请求关联
+c)保持会话的方法
+①给每个会话保持一个唯一的会话ID,并使用cookie或者URL重写的方式,
+②URL重写:是一个将传入web的请求截取并自动将请求重定向到其它URL的过程，response.encodeUrl()
+d)session的获取
+①HttpServletRequest接口中的getSession()方法,获取服务器创建的session,如果没有获取到则服务器自动创建
+②getSession(boolean);为true则和getSession()一致,如果为false那么会在没有获取到服务器创建的session时返回null.
+e)常用方法
+①setAttribute(String key, Object value);
+②Object getAttribute(String key);
+③setMaxInactiveInternal(int time);设置session的最大有效期,单位为秒,默认为1800秒,如果为负数或为0永不过期.
+④invalidate():使当前session失效,session中存放的数据全部丢失
+⑤String getId():返回HttpSession对象的JSESSIONID
+f)使session中数据失效的方法
+①HttpSession对象的invalidate()
+②设置有效期为1秒
+③使用removeAttribute(String key)方法移除session中的指定数据
+④关闭浏览器,存储JSESSIONID的cookie消失,服务器端的session将与客户端失去联系,等到超时后便会被回收,所以当浏览器关闭时,session也就相当于结束了
+5.session和cookie的区别以及关系
+a)关系:Cookie中存放着session对象的id
+b)区别:
+①存放的位置
+session存放于服务器, cookie存放在客户端的硬盘或者浏览器中
+②存放的数据不同
+session可以存放任意类型的数据,cookie只能存放字符串类型的数据
+③安全性
+session由于存放于服务器中所以较为安全,cookie存在于客户端,不安全
+④有效期
+session默认为30分钟,且当浏览器关闭时结束. cookie默认为-1表示临时的,浏览器关闭时失效,但可以通过设置有效期使其未达到失效期之前都可以使用
+⑤产生的方式不同
+session是在浏览器访问服务器时由服务器产生的,只能获取使用
+cookie可以自己创建并通过response对象添加到客户端
+三.数据共享方式的比较
+1.生命周期
+application > session >request > pageContext
+2.线程安全性
+application和session范围里的数据都是多线程共享的,request和pageContext范围中的数据是线程安全的
+3.
+①HttpServletRequest对象存储的信息只能在一个请求过程中共享,生命短暂
+②HttpSession对象生命周期比request对象长,用于跟踪客户端的状态
+③ServletContext对象与整个web应用相关,一般用于存放系统相关的信息,该对象仅在web服务器关闭或web应用被卸载时才会被销毁
+四.通过href, src的方式进行的资源访问无法访问到WEB-INF下的资源,所以需要通过访问servlet的形式然后转发到对应的资源
+
+f7-1.16
+创建时间：	2018/1/21 星期日 上午 11:22
+
+一.MVC模式
+1.模型Model:处理业务逻辑
+2.视图View:提供可交互的用户界面,向用户展示数据
+3.控制器Controller:处理客户端请求,根据请求来操纵模型并把响应结果经由视图展现给用户
+二.javabean
+1.与普通类的区别
+a)javabean必须提供空参构造方法
+b)属性必须私有化并提供getter/setter方法
+c)必须实现序列化接口Serializable
+2.jsp动作的getProperty和setProperty是通过该属性的getter/setter方法访问的
+3.如果页面控件的名称与javabean中的属性名相同,可以使用<jsp:setProperty name="属性名" property="*">把相同名的控件的值赋给该javabean的该属性
+4.jsp:forward转发
+a)当只转发一个页面时, <jsp:forward page="路径"/>
+b)当转发页面同时传参时, 
+<jsp:forward page="路径">
+    <jsp:param name="" value=""/>
+    ...
+</jsp:forward>
+也可以直接在url里传参
+5.动态包含与静态包含
+a)<jsp:include page=""> jsp动作动态包含
+b)<%@ include file=""%>指令静态包含
+c)区别:
+①动态包含是让每个页面各自翻译,各自编译,运行时才把编译的结果合并
+②静态包含是先把两个页面合并再一起翻译,编译再执行
+③静态包含的页面之间可以共享数据, 而动态包含不行
+④静态包含会出现命名冲突,而动态包含不会
+⑤静态包含不可以url传参,动态包含可以
+相同点:都会共用同一个request对象,其页面内容出现在_jspService方法中的顺序取决于它们出现在包含页面的顺序
+三.EL表达式
+1.主要用于访问存储在作用域中的对象及其属性,请求参数,cookie和其它请求报文中的信息
+2.访问作用域中对象的属性的格式
+a) ${对象名.属性名} 或 ${对象名["属性名"]}
+该方式获取Map集合中的数据只需要使用 Map集合对象名.key 就可以获取 key值对应的value
+b)访问集合类型对象
+${集合对象名[索引]}, 访问Map集合还可以使用 ${集合对象名["key"]}
+c)访问指定作用域中的对象
+${[pageScope|requestScope|sessionScope|applicationScope].对象名}, 当不指明作用域时,则根据作用域范围从小到大依次查找
+3.隐式对象
+a)四大作用域的隐式对象 pageScope,requestScope,sessionScope,applicationScope
+b)当前页面对象pageContext
+c)param为包含请求参数与对应字符串类型值的Map集合
+d)paramValues为包含请求参数与对应字符串类型值数组的Map集合
+d)header包含header名称和其对应字符串类型值的Map集合
+e)headerValues包含header名称和其对应字符串类型值数组的Map集合
+f)cookie:包含cookie名称和对应值的Map集合
+4.算术运算符,支持 + - * / %以及比较运算和逻辑运算, 其中+仅表示加法运算,不做字符串拼接,其两边必须是可以转化为数字的数据,否则编译失败
+5.${empty 表达式} : 判断其后表达式是否为空,为空则整个EL表达式的值为true,否则为false
+四.jstl标签
+1.使用
+a)导入jar包
+b)在jsp页面使用taglib指令引入:<%@ taglib prefix="前缀,通常为c" uri="路径"%>
+c)通过指定前缀调用
+2.常用的jstl标签
+a)<c:if>
+属性:①test: 值为要判断的表达式
+        ②var: 可选,值为test的结果
+        ③scope: 可选,指定var属性的作用域
+b)<c:forEach>
+属性:①items: 值为要迭代的集合对象名
+        ②var: 其值代表每一个迭代的集合中的对象
+        ③varStatus: 其值代表循环变量,该变量包含两个属性,index表示当前索引, count表示当前循环的个数
+        ④begin:其值为迭代开始的下标
+        ⑤end: 迭代结束的下标
+        ⑥step: 其值为每次迭代下标增长的值
+f6-1.15
+创建时间：	2018/1/19 星期五 下午 9:54
+
+一.转发与重定向
+转发:在服务器端把请求转个下一个资源
+重定向:使客户端重新发起请求一个资源,请求的方法为get方法
+1.转发和重定向的区别
+a)完成的方式不同
+转发通过request.getRequestDispathcer("url").forward(request, response)方法实现
+重定向通过response.sendRedirect("url")方法实现
+b)发生的位置不同
+转发发生在服务器
+重定向在客户端完成
+c)发送请求和响应的次数
+转发只发送一次请求,并响应一次
+重定向发送了两次请求并响应了两次
+d)请求中的内容是否保留
+转发的请求中的内容可以继续保存,因为转发的同时把请求对象传递了过去
+重定的请求中的内容不再继续保存,因为是客户端对服务器又发起了一次新的请求
+e)地址栏是否改变
+转发地址栏不变
+重定向地址栏变为重定向资源的路径
+f)可访问资源的不同
+转发只能访问本项目内部的资源,不过可以访问WEB-INF下的资源
+重定向既可以访问项目内部中除了WEB-INF下的资源,也可以访问项目以外的资源
+二.过滤器
+1.作用:
+对Servlet容器的请求和响应对象进行检查和修改,可以在Servlet被调用前处理请求对象,以及在调用完FilterChain对象的doFilter方法后处理响应对象
+2.创建:
+实现Filter接口,在doFilter(ServletRequest request, ServletResponse response, FilterChain chain)方法里进行处理,ServletRequest, ServletResponse分别是HttpServletRequest和HTTPServletResponse的父接口
+3.访问的配置
+a)web2.5需要在web.xml文件中配置,并要求filter必须配置在所有servlet前面,配置方式与servlet的配置方式类似
+b)web3.0需要在类上添加注解WebFilter("拦截的路径"), "/*"表示对服务器所有资源的请求都会经过过滤器, ".suffix"表示对文件为指定后缀名的请求过滤, "/directory/*"表示对指定目录下内容的请求过滤
+4.过滤器的生命周期与servlet类似, 加载类-->实例化-->初始化-->过滤请求-->销毁
+5.过滤器默认情况下处理客户端的请求,而由于转发是在服务器端完成的,所以转发的请求不会经过过滤器
+6.过滤器链
+由两个及以上的针对同一资源路径过滤的过滤器构成,多个过滤器按顺序执行,web2.5配置在web.xml文件会根据在其中配置的顺序执行,web3.0使用注解形式的会根据过滤器的类名排序执行,如果一个资源被一个小范围的过滤器以及一个大范围的过滤器同时过滤,那么会先执行小范围的过滤器.内层过滤器总是被包含在外层过滤器里,只有执行完了内层过滤器的整个操作后才会执行外层过滤器FilterChain对象的doFilter方法后面的代码
+7.Servlet的分类
+所谓的Servlet就是运行在服务器中的处理客户端请求并响应的java类
+a)标准的Servlet
+b)过滤器Filter
+c)监听器Listener 
+①监听器负责监视request, session, application对象的创建与销毁以及其中数据的变化
+②监听对象的创建与销毁
+i. request对象:需要实现ServletRequestListener接口并实现requestInitialized()方法以及requestDestroyed()方法
+ii. session对象: 实现HttpSessionListener接口并实现sessionCreated()方法以及sessionDestroyed()方法
+iii. application对象: 实现ServletContextListener接口并实现contextInitialized()方法以及contextDestroyed()方法
+③监听属性值变化的监听器分别需要实现ServletRequestAttributeListener,HttpSessionAttributeListener, ServletContextListener接口并实现属性添加,属性删除,属性替换这三个方法---attributeAdded(),attributeRemoved(),attributeReplaced()
+④session域中的对象可以有多种状态, 绑定状态---session.setAttribute("key", Object)以及解绑状态---session.removeAttribute("key")
+有两个特殊的监听器接口HttpSessionBindingListener和HttpSessionActivationListener接口,用于帮助javabean对象了解自己在session中的状态, 是给Javabean的类实现这些接口,并不需要在web.xml文件中注册
+i.HttpSessionBindingListener
+实现该接口后实现valueBound()方法以及valueUnbound()方法使对象了解自己在session域中绑定与解绑的状态
+ii.HttpSessionActivationListener
+实现该接口的类实现sessionWillPassivate()方法以及sessionDidActive()方法可以感知到自己将要和session对象一起序列化以及反序列化的事件
+
+f5-1.13
+创建时间：	2018/1/19 星期五 下午 9:16
+
+一.数据库分页top-n
+1.原理
+a)内层查询所有满足条件的数据,并排序
+b)第二层给查询的数据每一行添加一个rownum伪列,同时给rownum设置上限rownum<=?,注意这里只能用rownum而不能用rownum的别名
+c)最外层给rownum设置下限,此时可以用别名
+2.规律
+a)知道需要分几页, 总条数/每页的条数再使用ceil函数向上取整即可取得
+select ceil(count(*)/每页条数) from table
+b)上限,下限与查询的页数和每页条数的关系
+①上限=要查询的页数*每页条数
+②下限=(要查询的页数-1)*每页条数
+二.实现数据导出为Excel
+1.导入poi的jar包
+2.代码编写
+a)new的方式创建一个HSFFWorkbook对象,工作簿对象
+b)工作簿对象.createSheet()方法创建返回一个HSSFSheet对象,sheet页对象
+c)sheet页对象.createRow(int index)根据传入索引创建返回HSFFRow对象,行对象
+d)行对象.createCell(int index)根据索引创建返回一个HSFFCell对象, 列对象
+e)调用列对象的setCellValue()方法设置列的值
+f)数据填充完后调用工作簿对象的write()方法,传入HttpServletResponse对象的输出流对象作为参数,要求该response对象设置如下:
+response.setContentType("application/vnd.ms-excel;charset=UTF-8");
+response.setHeader("content-disposition", "attachment;filename=文件名.xls");
+f4-1.12
+创建时间：	2018/1/19 星期五 下午 6:48
+
+一.jsp
+1.jsp的作用
+实现表示逻辑与业务逻辑的分离,代替servlet完成页面的展示
+2.jsp的工作原理
+jsp最终会被翻译为servlet类,最终是以servlet对象的形式工作着,jsp实质上依然是个servlet
+3.jsp的生命周期
+a)翻译:当客户端请求访问一个jsp页面时,jsp容器先检验jsp页面的语法是否正确,然后将其翻译为servlet源文件
+b)编译:调用javac工具类编译servlet源文件生成字节码文件
+c)加载类:servlet容器加载被编译的servlet类的字节码文件
+d)实例化类
+e)调用jspInit()方法进行初始化
+f)调用_JSPService()方法处理客户端请求,容器会为每一个请求创建一个线程并调用该方法
+g)jspDestroy()方法的调用,当服务器调用该方法后,只是把jsp的对象销毁,并不会销毁jsp页面转换的字节码文件
+4.当第一次加载jsp页面时,需要将jsp文件转换为servlet类,所以响应速度较慢.当再次请求时,会直接执行第一次请求产生的servlet类,不需要重新转换jsp页面所以执行速度要快
+5.jsp的结构
+a)静态内容:html,css以及js
+b)动态内容
+①指令:以"<%@"开始,以"%>"结束, page,taglib,include
+②脚本元素
+i.表达式: <%=java表达式 %>,用于在jsp页面输出结果
+ii.小脚本scriptlet: <% java代码 %>
+iii.声明: <%!声明 %>,用于在jsp页面中定义变量或方法
+③动作: <jsp:动作名></jsp:动作名>
+④EL表达式
+⑤自定义标签:jstl标签
+6.组成部分翻译时所对应的位置
+a)静态内容:所有内容添加到_jspService()方法中,作为out.write()的参数使用
+b)动态内容
+①小脚本scriptlet:直接作为_jspService()方法中的一段代码
+②声明:放在_jspService()方法外面,声明的变量成为成员变量
+③表达式:放在_jspService()方法中作为out.write()的参数使用
+7.jsp预定义变量,9大内置对象
+a)HttpServletRequest---request:当前请求对象
+b)HttpServletResponse---response:当前响应对象
+c)HttpSession---session:当前请求的客户的会话对象
+d)JSPWriter---out:当前响应对象的输出流
+e)ServletContext---application:web应用对象
+f)PageContext---pageContext:封装当前请求内此jsp页面信息的对象
+g)Object---page:指向页面本身,相当于this
+h)ServletConfig---config:与当前页面的servlet对应的ServletConfig对象
+i)Throwable---exception:抛出的Throwable对象,仅当<%@ page isErroPage="true"%>时才有效
+对象可以存放在application,session,request,pageContext四个作用域中,如果把数据放在pageContext中,那么相当于_jspService()中的局部变量,作用域范围application>session>request>pageContext
+8.jsp指令
+a)page:定义jsp页面的某些属性,一个页面可以有多个page指令,但其中的每个属性除了import都只能出现一次
+属性:
+①language:指定文件所使用的脚本语言,仅java有效
+②import:指定导入的jar包
+③contentType:指定响应结果的类型和字符编码, contentType="响应类型;字符编码",响应类型默认为text/html,字符编码默认为iso-8859-1
+④pageEncoding:定义输出流的字符集编码,默认为iso-8859-1
+⑤errorPage:指定当发生异常时,重新定向至哪个页面
+⑥isErrorPage:表示此网页是否为处理异常的网页,值为true或false
+b)include:包含其他文件
+<%@ include file="文件名"%>
+c)taglib:允许jsp页面中使用自定义标签
+<%@ taglib prefix="前缀" uri="uri" %>
+二.乱码处理
+1.Servlet中设置请求报文和响应报文的编码方式
+request.setCharacterEncoding("UTF-8");
+response.setCharacterEncoding("UTF-8");
+2.jsp的page指令声明统一输出字符集编码:属性contentType="text/html;charset=UTF-8"
+3.HTML代码声明中统一输出字符集编码
+<head>标签中添加<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+4.设置数据库字符集
+5.将需要读写的文件字符集设为UTF-8
+6.设定服务器的字符集
+f3-1.11
+创建时间：	2018/1/19 星期五 下午 6:48
+
+一.数据库连接池
+会在程序启动时,根据配置自动创建并管理数据库连接
+1.两种配置方式
+a)服务器级别
+①把数据库驱动包放入服务器目录的lib目录下
+②修改conf目录下的context.xml文件,在其中配置数据源
+b)项目级别
+①添加数据库驱动jar包至项目
+②往META-INF目录下创建context.xml文件并配置数据源
+2.数据源配置的内容
+在xml文件的Context节点中添加Resource子节点,并添加设置属性
+<Resource name="数据源名" auth="Container" type="javax.sql.DataSource" driverClassName="数据库驱动名" url="数据库连接路径" username="用户名" password="密码" maxActive="" //最大连接数,0表示无限制 maxIdle="" //数据库连接的最大空闲时间,超过空闲时间将会被标记为不可用并释放,0表示无限制 maxWait="" //建立连接的最大等待时间,超过将会异常,1表示无限制 />
+3.数据库连接的获取
+a)先获取数据源,在从数据源中获取连接
+Context context = new InitialContext();//获取JNDI的上下文对象Context
+DataSource ds = (DataSource) context.lookup("java:comp/env/数据源名");
+Connection conn = ds.getConnection();//从数据源中获取一个空闲的连接
+b)连接池对Connection中的方法进行了重写,例如close方法调用时会使连接返回连接池,而不是关闭
+c)数据源是由应用程序的服务器管理的,所以只有运行在服务器中的java web程序才可以使用
+f2-1.10
+创建时间：	2018/1/16 星期二 下午 9:17
+
+一.HTTP请求
+1.HttpServletRequest对象
+a)主要作用:
+①提取客户端请求信息,比如客户端表单信息,HTTP请求报头信息以及cookie
+②资源转发: getRequestDispatcher("url").forward(request,reponse)
+在服务器内部完成,可以访问在WEB-INF下的资源
+③修改字符集:setCharacterEncoding("encoding");
+b)获取请求信息的方法
+①Enumeration getParameterNames():获取请求中所有参数名的集合
+②Map<String, String[]> getParameterMap():以键值对的形式存储表单中的参数名和参数值
+③String getMethod():获取HTTP请求方法
+④String getRemoteAddr():获取客户端的IP
+⑤getReader()或getInputSteam()方法用于读取那些不是表单提交或是来自于上载的文件,比如<input type="file">
+2.HTTP响应码
+a)1xx:表示请求受到,继续处理
+b)2xx:表示请求成功
+c)3xx:重定向
+d)4xx:客户端错误,400-403为权限错误, 404-414为文件丢失错误
+e)5xx:服务器错误
+3.HttpServletResponse对象
+a)作用
+①设置响应字符集:setCharacterEncoding("encode")
+②向客户端输出信息:DHTML,数据,二进制文件,Cookie,XML
+③请求重定向:sendRedirect("url")
+b)响应
+①setContentType("type"):设置输出内容类型
+Excel表格:application/vnd.ms-excel
+HTML: text/html
+XML: text/xml
+纯文本: text/plain
+图片: image/图像格式
+Word文档: application/msword
+json : application/json
+②PrintWriter getWriter():返回可以向客户端发送字符数据的对象
+③ServletOutputStream getOutputStream():返回可以向客户端发送二进制数据的输出流对象
+④addCookie(Cookie):向响应报头插入一个cookie,可以插入多个
+二.Servlet配置
+web.xml文件中的配置
+1.<servlet>节点下
+a)<init-param>:定义servlet的初始化参数,可以有多个,该节点下有两个节点: <param-name>和<param-value>,这两个子节点都只能有一个,可以通过ServletConfig对象的getInitParameter("param-name")获取
+b)<load-on-startup>:决定web应用启动时装载Servlet的顺序,当该值为正数或零时,Servlet容器会优先加载该值小的servlet,如果设置为负数或不设定,那么web容器会在用户首次访问这个servlet时才加载它
+
+f1-1.9
+创建时间：	2018/1/16 星期二 下午 7:39
+
+一.servlet
+一个运行在服务器端处理客户端请求并响应的java程序
+1.创建servlet
+a)继承HttpServlet并重写doGet或doPost方法,HttpServlet专门处理http协议
+b)继承GenericServlet并重写service方法,该serlet不遵守任何协议
+c)实现Servlet接口,实现init, service, destroy方法
+2.servlet生命周期
+a)加载类
+b)实例化(调用构造方法创建对象),servlet必须提供无参构造方法
+c)初始化.调用init方法
+d)服务,调用service方法
+e)销毁,调用destroy方法,该方法不一定会执行,倘若强制关闭服务器就不会执行
+ps:一个servlet开始于客户端对它的请求,销毁于服务器刷新或关闭时,服务器通常会间隔性的刷新.生命周期中除了service方法会调用多次以外,其它的方法都只会调用一次,且servlet中的所有方法都是由服务器调用的
+3.servlet中的doGet方法和doPost方法是由HttpServlet中的service方法根据客户端提交数据的method来决定调用的.如果重写了service方法,那么必须在重写的service方法中添加super.service(request,response)
+4.web容器为每一个请求创建一个线程,在线程中创建请求和响应的对象,通常情况下,一个servlet类只创建一个实例,所有线程共享一个servlet实例,所以通常禁止在servlet中使用全局变量,如果使用了则必须在service方法中重新赋值
+5.http请求常用的两种方式:get和post
+a)仅当form表单中的method为post或采用post方式提交时,其它都默认是get,例如超链接的href,location.href,form表单的method
+b)get和post的区别
+①安全性:
+get会在地址中显示提交的数据,不安全.
+post不显示,安全
+②数据容量
+get提交其url长度会受浏览器与服务器的限制
+post理论上没有长度限制
+③中文的处理
+get提交的数据中文处理需要先使用getBytes方法转换为iso-8859-1编码格式的字节,再重新组建为utf-8编码格式的数据
+post的中文处理只需设置request.setCharacterEncoding("UTF-8")
+④请求速度:get的请求速度比post要快
+⑤是否可以添加为收藏或邮件发送
+get可以实现,post不可以实现
+大多数情况下使用post方式,因为get方式无法传递中文
+二.Tomcat
+1.增加虚拟目录
+修改conf目录下的server.xml文件,添加<Context path="虚拟路径" reloadable="true" docBase="物理路径"/>. 可以通过访问该虚拟路径访问到物理路径上的资源
+
+f0-1.8
+创建时间：	2018/1/16 星期二 下午 6:27
+
+一.WEB
+1.核心
+①统一资源标识符URL(Uniform Resource Locator),描述资源地址的一种标识方法,组成: 协议+服务器地址(端口)+具体资源路径
+②超文本传输协议HTTP(HyperText Transfer Protocol),负责规定浏览器和服务器怎样相互交流
+③超文本标记语言HTML,告诉浏览器向用户展示什么样的内容
+二.Java EE
+1.简介:Java企业级开发的一个平台, 是一种框架和标准
+2.核心技术
+a)JDBC(Java DataBase Connectivity):Java数据库连接,用于在Java中连接各种数据库,是各种持久化框架的核心
+b)JNDI(Java Naming and Directory Interface):Java命名和目录接口,通过一个名称找到对应资源的技术
+c)JSP(Java Server Page):Java服务端页面,用于动态生成页面,设计理想是页面无java脚本
+d)Servlet:一个运行在服务器端用于处理请求并响应的Java程序,是MVC框架中的核心控制器
+e)XML(Extensive Markup Language):可扩展标记语言
+g)EJB(Enterprise Java Bean):企业级javabean
+
+e9-1.4
+创建时间：	2018/1/14 星期日 下午 9:32
+
+一.正则基础
+js中可以显示的使用RegExp对象来使用正则表达式,也可以使用字面量 /匹配模板/ 来代替RegExp对象调用不同的方法
+1.元字符
+a) . 表示任意字符,除了换行符以外: \n, \r, \u2028或\u2029;
+b) \d 表示数字 0-9
+c) \D 表示\d取反, 即不是数字0-9的字符
+d) \w 表示 数字0-9 或 字母a-z以及A-Z 或 下划线
+e) \W 表示\w取反
+f) \s 表示空格符, Tab, 换页符, 换行符
+g) \S 非\s
+h) \t \r \n \v \f 分别表示Tab, 回车, 换行, 垂直制表符, 换页符
+2.范围符号
+a) [...] 表示字符的范围,下限与上限用 - 隔开,多个字符范围可以写在一个方括号里且不用隔开
+b) [^...] 表示指定字符范围以外
+c) ^ 表示行首, 格式: ^被匹配字符 确定被匹配字符是否在行首
+d) $ 表示行尾, 格式: 字符$
+e) \b 表示单词边界, 即单词和符号之间的边界, 单词可以是中文字符,英文字符,数字, 符号可以是中文符号, 英文符号, 空格, 制表符, 空格, \b会识别指定字符串是否处于边界
+f) \B 非单词边界, 单词与单词, 符号与符号之间的边界
+3.特殊符转义,如果被匹配的字符包含特殊字符,正则表达式想要直接匹配时,可以在模板中的特殊字符前加上 \
+4.量词
+a) * 表示重复零次或多次, 即 >=0
+b) + 表示重复一次或多次. 即 >0
+c) ? 表示重复零次或一次
+d) {n} 重复n次
+e) {n,m} 重复n到m次
+g) {n,} 重复n次或更多次
+h) x|y 既匹配x也匹配y,可以多个连续使用
+5.懒惰限定符
+当字符 ? 紧跟在量词后面时,匹配模式是非贪婪的,会尽可能少的匹配字符串
+6.分组
+a)就是把一部分匹配模板所捕获的内容记录保存下来方便后面引用, 使之可以复用,简化表达式,所捕获的内容为匹配的字符串中最后一个字符，被捕获的分组记录下来后会自动从1开始分配编号, 然后捕获组后面可以使用 \编号 的方式对其引用
+b)格式
+① (exp) 匹配表达式并自动分组,会自动生成编号
+② (?<name>exp) 匹配表达式并把该捕获文本放入名称为name的分组里, 其后对该分组的引用通过 \k<name>引用
+③ (?:exp) 匹配exp,但不捕获文本, 也不给该分组分配编号
+零宽断言---不会返回符合断言中表达式的字符的断言
+① (?=pattern) 正向断言,匹配指定位置后面跟的是符合pattern表达式的字符
+②(?!pattern) 正向否定断言,匹配指定位置后面跟的不是符合pattern表达式的字符
+③(?<=pattern) 反向断言, 前面跟的是pattern的字符
+④(?<!pattern) 反向否定断言,前面跟的不是pattern的字符
+ps:以上四种都是非获取匹配,不会被捕获并分组
+7.三个flag
+a)global: js中当指定了global检索模式时,不会遇到第一个匹配的就停止,而是会去匹配所有的
+b)ignoreCase: 检索时忽略大小写
+c)multiline: 指定了multiline时,即使有换行也继续检索
+使用方式:
+①在字面量 /字面量/ 后加上 三个flag的字母的首字母的小写表示指定哪几种检索模式
+②RegExp构造函数的第二个参数设置为三个flag的字母的首字母小写
+8.RegExp对象的属性
+a)global, ignoreCase, multiline, 返回一个布尔值, 判断检索模式是否包含该属性
+b)source, 返回匹配模板的字符串
+9.RegExp对象的方法
+a) test(): 检索字符串中是否存在符合检索条件的字符,返回布尔值
+b) exec(): 返回字符串中符合检索条件的字符,如果没有匹配的则返回null
+c) compile(): 用于改变RegExp对象, 既可以修改匹配模板, 也可以修改检索模式
+10.String类型prototype属性上与正则相关的方法
+a)search(reg): 寻找符合reg表达式的字符第一次出现的索引
+b)replace(reg, "字符"): 将符合的替换为指定字符串
+c)match(reg): 返回一个包含符合检索条件字符串的数组
+d)split(reg): 根据符合检索条件的字符串来进行分割,返回一个数组
+e8-1.3
+创建时间：	2018/1/14 星期日 上午 11:33
+
+一.继承
+a)当往一个函数的prototype对象属性上添加属性时,通过new出来的对象都能访问这些属性,而当一个函数a的prototype属性等于另一个函数b的prototype属性时,通过a函数所构建的对象也可以访问b函数上的属性,即达成继承.可以把a函数的prototype属性的constructor属性设为a,否则会因为继承而使其指向b的构造函数
+例子:
+Student.prototype = Object.create(Person.prototype);
+Student.prototype.constructor = Student;
+b)使用Object.create()函数是因为当直接使Student.prototype=Person.prototype时,对Student的属性扩展会影响到Person,且使用create函数可以使Student.prototype对象属性是一个空的且原型是指向Person.prototype的属性,不会直接拥有Person.prototype上的属性.
+c)为Student.prototype添加与Person.prototype同名的属性会覆盖Person.prototype中的属性, 因为如果在Student.prototype中找到了该属性便不会再沿着原型链往上找,可以这样实现方法的重写
+d)另一种继承方式 Student.prototype = new Person();
+new Person()所构建的对象的原型_proto_指向Person的prototype,所以将其赋值给Student.prototype也是可以的
+二.原型链
+a)并不是所有的对象的原型链上都有Object.prototype, 比如Object.create(null) 传入一个null所返回的对象其原型链上没有Object.prototype,没有任何方法 另一种方式比如 函数名,bind(null) 这种方式所返回的函数对象没有prototype属性
+b)当修改一个函数的prototype上的属性的值时,会使所有实例对象受到影响, 而当修改函数的prototype的值时,只有修改以后实例化的对象会受到影响.
+e7-1.2
+创建时间：	2018/1/2 星期二 下午 9:35
+
+一.闭包---能够读取其它函数内部局部变量的函数
+1.当一个函数里的局部变量是在返回值为函数类型的函数里返回时,将该函数的返回值赋值给一个变量,每次调用改变量都能获取到其原函数里的局部变量,这个局部变量始终都没有被释放
+2.注意点
+a)闭包会使得函数的变量都被保存在内存中,可能会造成内存泄漏
+b)闭包可能会在父函数的外部改变父函数内部变量的值
+二.作用域
+1.js中没有块级作用域,所以在for循环或while循环等小括号中声明的值在其外部依然可以访问,跟定义了一个全局变量一样
+三.执行上下文(Execution Context)---EC
+1.类似于一个栈级的结构
+2.变量对象(Variable Object---VO)
+a)抽象概念的对象,用于存储EC中的变量, 函数声明, 函数参数
+3.变量初始化阶段
+VO对象按照如下顺序填充数据:
+a)函数参数(传参时如果未传入,那么初始化该参数的值为undefined)
+b)函数声明:如果函数的命名与其它的命名发生冲突,那么后面的会覆盖前面的
+c)变量声明:变量的初始化会被提前,变量声明时其初始化变量值为undefined,如果变量的命名与前面的命名发生冲突,那么会忽略掉该变量
+d)函数表达式不会影响VO, 比如变量赋值符号右边的表达式并不会影响或记录到VO对象
+3.函数中的激活对象AO
+a)类似于执行函数时的一个arguments对象
+b)对于函数对象来说, VO和AO是同一个对象
+http://www.cnblogs.com/wangfupeng1988/p/3991995.html
+e6-1.1
+创建时间：	2018/1/1 星期一 下午 2:37
+
+一.函数
+1.返回值:
+a)一般函数的调用: 如果函数没有return语句,那么会在函数体内所有代码执行完后返回一个undefined
+b)作为构造函数被调用: 如果没有return语句或者返回的是基本类型,那么会将this返回
+2.函数声明和函数表达式
+a)函数声明:以function开头,不允许匿名且不能被立即调用的标准函数,没有对整个函数进行其它操作
+b)函数表达式:
+①将一个匿名函数赋值给一个变量
+②将一个匿名函数使用括号括起来并在后面加一对小括号,会立即执行
+③将一个函数作为返回值返回
+④将一个非匿名函数赋值给一个变量
+3.变量和函数的声明前置
+当声明一个普通函数或变量时,它们的声明会被放在赋值语句之前,这也就导致了如果把一个函数声明赋值给一个变量,然后在该赋值语句之前使用该 变量时会报错,因为此时该变量的声明被前置了,尚未赋值,为undefined. 不过函数声明的前置比变量声明的前置要早   
+4.this
+a)全局下的this代表着window
+b)一般函数下的this也代表着window, 不过严格模式下该this会指向undefined
+c)对象的方法里的this:通常指向该对象,对象.方法的方式调用方法其this指向调用它的对象
+d)对象原型链上的this: 原型链上函数里的this也能指向其下的对象
+e)构造器中的this: 当一个函数配合new使用作为构造函数使用时,其函数里的this会指向一个空的对象,且该对象的原型指向构造函数的prototype,如果构造函数里的代码执行完后没有return或者return了一个基本类型,那么会将this返回,否则以return返回的对象为准
+5.call/apply方法
+a)适用于调用那些无法直接调用的方法
+b)使用: 函数名.call/apply(),参数1可以为任意值,会传入该函数,当参数1为基本类型时,会自动将其转换为对应的引用类型传入,当为null或undefined时,代表着window,严格模式下依然为原值, 其后的参数为该函数的实参,该函数里的this会指向传入的参数1, call和apply的区别只是放实参的方法不同,call使用可变参数放实参, 而apply使用一个数组放实参
+6.bind方法
+a)函数.bind(对象, 参数...):把方法绑定在对象上并返回对象绑定后的方法,其函数里的this指向传入的对象. 即使绑定后返回的函数被作为其它对象的函数调用,其this依然指向最初绑定时传入的对象;
+b)bind里的currying科里化:
+假设一个函数有多个参数, 需要多次调用该函数,但有部分参数都是相同固定的值, 为了减少重复代码可以使用bind(),然后参数1为null或undefined,其后的参数为固定重复的参数值,之后每次调用返回的函数对象传入的参数都会传递给固定参数后的参数
+c)如果有一个对象的一个属性为函数对象,当使用对象.属性()调用时其函数里的this指向该对象,但当将该函数赋给一个变量时,调用该变量时函数里的this指向的是window,若要使其指向原本的对象时,可以使用bind()绑定
+d)当bind返回的函数对象与new一起作为构造函数使用时,会忽视掉bind函数绑定的对象, 其this指向的是原型为构造函数的prototype的空对象
+7.函数的属性
+a)函数.name : 函数名; 函数.length:形参的个数; arguments.length: 实参个数
+b)arguments: 类似于数组的对象,其原型并不是Array.prototype,所以没有数组才有的方法;arguments对象与传入的参数具有绑定关系,修改形参对应索引上的值会影响形参的值,但是当未传参数时会失去绑定关系,改变arguments对应索引上的值无法影响到形参的值
+8.eval()函数: 转换函数,传入一个字符串
+a)如果传入的字符串包含运算符,那么eval函数会将其计算并返回其结果值
+b)可以把符合json格式的数据转换成json对象, json格式的写法: {name:value, name:value...}, 类似于json格式的创建对象,传入至eval函数时需使用小括号包裹并使用引号或双引号使其成为一个字符串.
+e5-12.31
+创建时间：	2017/12/31 星期日 下午 2:56
+
+一.数组
+1.稀疏数组: 稀疏数组不含有从0开始的连续索引,通常出现在new Array(长度)构造的数组下,虽然即使从没有赋值过的索引上能够取得undefined值,但实际上该数组并没有这个索引,它的索引并不是从0开始连续的,它的索引的存在取决于该索引上是否有值,稀疏数组一般length属性比实际的元素个数要大
+2.数组方法
+Array.prototype原型链上的方法
+a)join():将数组的所有元素拼接成字符串,使用其指定的字符串进行分隔,默认为逗号
+b)reverse():将该数组逆序,会修改原数组
+c)sort()
+①默认是按照字母进行排序,会将其它数据类型临时转换为字符串排序,会修改原数组
+②sort函数比较数字并不准确,可以给该函数传入一个函数作为参数,该函数有两个参数比如a,b.返回a-b则从小到大排列,返回b-a则从大到小排列
+d)concat():合并数组,不会修改原数组,传入的参数为要合并的元素,如果某个参数为数组,则会合并数组里的每个元素,如果依然嵌套着数组,则只合并整个数组
+e)slice():根据索引返回部分数组,负数的索引表示从右至左算,原数组不会被修改
+f)splice():数组拼接,传递一个参数表示去掉从该索引开始的所有元素,两个参数表示去掉从参数1开始的"参数2"个元素;如果其后还有参数,则表示去掉元素之后在指定索引上要进行拼接的元素 ,原数组会被修改
+g)forEach():传入一个函数参数:function(item, index, arr){方法体} 该函数参数的item参数代表着数组的每一个元素,index为索引,arr为正在遍历的数组,后两个参数可以不写
+h)map():数组映射, 传入一个函数参数, 函数参数的参数代表着数组的每一个元素,原数组不会被修改
+i)filter():数组过滤,传入的函数参数的 参数1代表着数组的每个元素,参数2代表索引,可以只返回符合要求的元素过滤掉不符合要求的元素,原数组不会被修改
+j) every()和some():传入一个函数参数,其参数代表数组的每一个元素,every()表示每一个元素是否都满足一定条件,some()表示只要有一个元素满足条件便返回true;
+k)reduce()和reduceRight(): 传入的函数参数的两个参数代表着每次两两操作的数组元素,函数返回的值作为下一次的两两操作的第一个值,可以用于寻找数组中的最大数:arr.reduce(funciton (x, y) { return x > y ? x : y; });
+reduceRight()不同的是从右边开始遍历, 这两个函数都不会改变原数组
+ps: Array.isArray():可以判断传入的参数是否为数组
+e4-12.28
+创建时间：	2017/12/28 星期四 下午 5:43
+
+一.js高级
+1.类型检测
+a)typeof:返回一个值为其数据所属类型的字符串,检测函数返回"function",引用类型返回object,其中当使用typeof检测 NaN时,返回"number",因为NaN属于Number对象的一个特殊的值,检测null返回object. 适用于检测基本类型和function
+b)instanceof:检测指定对象是否属于某一类,返回true或false,适用于检测自定义对象和本地对象,即js已经定义好的一些对象,注意:不适用于不同window或iframe之间的类型检测
+instanceof要求右边是一个函数,否则会报错,左边则一般是对象,如果是基本类型则直接返回false,instanceof是判断右边构造函数的prototype属性是否出现在左边对象的原型链上.
+c)Object.prototype.toString.apply():返回一个值为 "[object 类型]"的字符串,适用于检测内置对象(Global, Math)以及基本数据类型,遇到null或undefined失效
+d)检测null使用严格等于 ===
+2.调用无参构造函数时可以省略小括号;
+3.运算符
+a)逗号运算符
+var val = (表达式1, 表达式2, 表达式3...);
+会依次计算各个表达式的值,最终整个表达式的值以最右边的为主
+b)delete运算符,用于删除对象的属性
+使用方法: delete 对象名.属性名
+前提:指定对象的该属性是可删除的,默认是可删除的,设置方式
+Object.defineProperty(对象名, "属性名", {configurable : true或false, [value : 属性值]}); 其value是当想要删除属性时设置的值,可不写 
+c)in运算符
+判断某一属性是否存在于指定对象中: "属性名" in 对象
+4.作用域
+代码块block: 直接以花括号开头的一段代码
+js中没有块级作用域,在块里定义变量和在代码块外定义变量是一样的  
+5.try-catch
+当多层try catch嵌套时, 如果内部异常没有catch块且外层能够捕获该异常,则会跳转到外层的catch块,在这之前会执行内层的finally语句, 总之就是当内层没有解决异常时,抛给外层时会先执行finally语句
+6.严格模式
+a)使用方式:可以再某个函数内或者整个js代码的开头加上"use strict";
+b)严格模式的作用
+①不允许使用with
+②不允许未声明的变量被赋值
+③arguments,类似于一个参数的数组,与传入的参数绑定,当修改arguments数组的某一下标的值时,其对应的参数的值也会被改变,不过当未传入参数时,其值为undefined,此时修改arguments数组对应的值并不能改变该参数的值.
+严格模式下arguments会变为参数的静态副本,对其修改并不会影响传入的参数,不过当传入的参数为对象时,通过arguments数组修改对象的属性值依然是可以的
+④delete参数.函数名会报错,之前只会返回false
+⑤delete不可配置(configurable:false)的属性会报错,之前只会返回false
+⑥对象的属性名重复会报错,非严格模式下属性名重复是可以的,其值为最右边的为准
+⑦禁止八进制的字面量
+⑧eval,arguments变为关键字
+ps:在函数声明前加上 ! 可以让解释器理解为函数表达式,就能使其自动调用了
+7.原型链
+①通常定义的函数对象都默认的带有一个prototype对象属性,通过构造器创建的对象其原型[[proto]]会指向构造器的对象属性prototype,构造器的prototype的原型会指向Object的prototype属性,而Object的prototype属性也是有原型的,指向null
+②当访问该对象的属性或方法时,若该对象没有,则通过其原型链逐级向上查找,如果找到null还没有找到的话,就会返回undefined,不过当访问某个属性返回undefined时,不一定代表没有该属性,可能只是该属性被赋为undefined
+③要想访问原型链上的某一属性时,得删除掉对象上的该属性
+④给对象赋值时,并不会通过原型链查找,删除对象的属性时,并不会影响到原型链上的属性
+⑤hasOwnProperty("属性名")方法能够判断某一属性是不是其对象自身的.
+⑥Object.create():通常传入的参数为一个对象,该方法会返回一个对象,并且其原型指向传入的参数,当传入一个null时.其返回的对象不会包含任何方法
+8.属性操作
+a)访问: 当访问一个对象不存在的属性时会返回undefined, 如果对象不存在的属性的属性时,会报错,通常在进行这种访问时,会先对属性进行是否存在的判断
+b)删除: 通过delete, var定义的全局变量或局部变量,函数或者函数内的函数其configurable属性为false,即不可删除,隐式的全局变量,没有var声明的可以删除    
+c)属性检测
+①in操作符判断指定属性是否存在于某一对象上,会通过原型链向上查找
+②propertyIsEnumerable(属性名): 该方法可以判断某一对象上的指定属性是否是可以枚举的,可以通过Object.defineProperty(对象名, "属性名", 模板对象)来设置某一属性是否可枚举, 其模板对象的属性: {enumerable: true或false, [value : 属性值]}
+d)属性枚举
+①for...in遍历时,有可能会把原型链上的属性遍历出来,且遍历的顺序是不确定的,如果不想遍历原型链上的属性,可以在遍历时通过hasOwnProperty方法来过滤原型链上的属性
+e)属性的getter/setter方法
+①在构造函数中添加,以get/set开头: get/set 属性名(参数) {方法体},之间以逗号分隔,当访问或设置其对应属性的时,会调用对应的get/set方法
+②当原型链上的某个属性设置了set或get方法时,对其属性的操作都是通过get/set进行,如果没有则无法进行.如果需要在对象上添加该属性,则可以通过Object.defineProperty方法为对象设置属性名,属性值以及configurable
+9.属性标签
+writable, enumerable, configurable
+a)Object.getOwnPropertyDescriptor(),传入一个对象以及属性名的字符串,返回一个对象,包含了指定对象的指定属性的所有标签
+b)Object.keys()函数.传入一个对象参数,返回一个包含可被遍历的属性的属性名的字符串数组
+
+10.对象标签
+a) _proto_ 原型标签
+b) class 对象类型标签
+只能通过Object.prototype.toString.call()方法获取
+c) extensiable 是否可以继续添加属性
+①Object.isExtensiable()函数判断某一对象是否可以扩展属性
+②Object.preventExtensions()函数可以使某个对象不可扩展属性
+③Object.seal()函数可以是传入的对象的所有属性的configurable标签设为false
+④Object.freeze():使传入的对象的所有属性标签设为false
+11.序列化
+a)JSON.stringify():传入一个对象,返回一个属性序列化后的字符串
+b)属性值为undefined的属性不会被序列化,值为NaN和Infinity的属性其值会被处理为null, 日期类型的属性值会被转换为UTC的时间格式
+c)解析json数据: JSON.parse(),传入要解析的json数据,返回一个包含对应的属性和属性值的对象
+d)对象的自定义序列化方式,重写toJSON函数,使其返回一个新的结果
+e3-12.27
+创建时间：	2017/12/27 星期三 下午 9:57
+
+一.BOM---浏览器对象模型
+Window对象---浏览器窗口
+1.所有JavaScript的全局对象, 函数以及变量全都会自动成为window对象的成员,全局变量时window对象的属性,全局函数时window对象的方法,document也是window对象的属性
+2.拥有一些对窗口操作的方法:打开open(), 关闭close(),移动moveTo(), 调整大小resizeTo();
+3.widow.screen对象包含有关用户屏幕的信息
+a)availWidth:可用的屏幕宽度
+b)availHeight:可用的屏幕高度
+返回的宽高都会减去界面特性比如窗口任务栏
+4.window.location
+a)作用: 用于获得当前页面的URL地址并重新定向
+b)属性
+①hostname:web页面主机的域名
+②pathname:当前页面的路径和文件名
+③port:web主机的端口
+④protocol:所使用的web协议, http://或https://
+⑤href:当前页面的整个URL,可以设置其属性值为其它的URL跳转至其他页面
+⑥hash:从井号#开始的URL
+⑦search:从问号?开始的URL
+c)方法
+①assign(URL路径):加载新的文档,可返回上一URL
+②reload():重新加载当前文档
+③replace():用新的文档替换当前文档,不可返回上一URL
+5.window.history
+a)history对象包含着用户曾经浏览过的页面URL,从窗口被打开的那一刻开始记录,每个浏览器窗口,标签页,甚至框架(即frame),都有自己的history对象与window对象关联
+b)属性
+①length:浏览器历史列表的URL数量
+c)方法
+①back():加载历史列表中的前一个URL
+②forward():加载历史列表中的下一个URL
+③go():传入一个数字,-n表示加载前面第n个URL, n表示加载后面第n个URL
+6.window.navigator---包含有关浏览器的信息
+7.消息框
+消息框出现后用户需要点击确定或取消按钮才能继续进行操作
+a)警告框:alert("文本"),
+b)确认框:confirm("文本"):如果用户点击确认则返回true,否则返回false
+c)提示框:prompt("文本", "默认值"):如果用户未输入点击确定那么返回的是默认值,否则为输入的值,点击取消则返回null
+8.计时器
+a)创建:setInterval/setTimeout(要调用的函数或代码, 时间间隔单位毫秒ms)
+b)调用函数格式:要调用的函数可以填 "函数名()",一个字符串,也可以直接填函数名
+c)setInterval()和setTimeout()都是在页面载入后间隔一定时间执行代码,但setTimeout()只执行一次
+d)clearInterval()和clearTimeout()用于清除定时器,需要传入定时器的变量名
+二.cookie
+cookie是浏览器提供的一种机制,它将document对象的cookie属性提供给JavaScript, JavaScript可以对其进行操控,cookie是存于用户硬盘上的一个文件,其对应于一个域名,当浏览器再次访问这个域名时,便是这个cookie可用,所以cookie可以用于一个域名下的多个网页,当不能跨域名使用.同时cookie是与浏览器相关的,不同浏览器访问同一页面所保存的cookie是独立的,不能相互访问
+1.设置cookie
+a)每个cookie都是一个名/值对,可以把这样的一个字符串赋给document.cookie,例如document.cookie = "名=值";
+b)cookie的名或值不能使用分号,逗号,等号以及空格,但可以使用escape()函数对其进行编码,空格会被编码为 "20%",编码后的值被取出来后需要使用unescape()进行解码获取原来的值
+c)对document.cookie的多次赋值并不会使其丢失原来的值,它和一般属性不一样,每次的赋值都是添加一个cookie
+d)改变cookie的值只需给cookie重新赋值, document.cookie="cookie名=新值";
+2.获取cookie
+a)cookie的值通过document.cookie直接获取,这将返回一个字符串,其内容为以逗号和空格分隔开的多个名/值对,这些名/值对为该域名下所有的cookie,
+b)由于只能一次取出所有的cookie,取出某一个cookie的值需要先对得到的cookie值使用split()函数分割, 根据 "; "来分割,再遍历分割后得到的数组,再对其每一个数组根据 "="进行分割,得到的数组长度为2, 下标0的值为cookie的name, 下标1的值为cookie的value,这时拿要寻找的cookie的name跟下标0的值进行比较,相同则下标2的值即为要找的cookie的value
+var key = "key";
+var cookies = document.cookie.split("; ");
+for (var i = 0; i < cookies.length; i++) {
+    var cookieMap = cookies[i].split("=");
+    if (key == cookieMap[0]) {
+        key = cookieMap[1];
+        break;
+    }
+}
+3.设置cookie终止日期
+所有的cookie都是单会话cookie,随着浏览器的关闭而消失,这些cookie仅存在于内存中,持久化需要设置其终止日期
+a)设置方式: document.cookie="名=值; expires=UTC日期";
+设置的终止日期需是UTC日期,可以调用Date对象的toUTCString()函数取得
+b)其它应用:可以设置某个cookie的过期时间设为一个过去的时间使其被删除
+4.指定可以访问cookie的路径
+默认情况下,如果某个页面创建了一个cookie,那么该页面所在的其他页面以及其下的子目录都可以访问这个cookie,可以通过对path参数的设置来控制可访问cookie的路径
+document.cooke = "name=value; path=可访问目录",
+如果要是cookie在整个网站可用,可以把可访问目录设为"/"
+5.指定可访问的主机名
+主机名是指同一个域下的不同主机,默认情况下,一个主机创建的cookie不能被另一主机访问
+可以通过设置domain参数使其它主机能够访问
+如果把domain参数设为 .google.com 那么google.com下的所有主机都可以访问该主机的cookie
+e2-12.26
+创建时间：	2017/12/27 星期三 下午 5:26
+
+一.DOM
+1.DOM节点---HTML文档中所有的内容都是节点
+a)文档节点:整个文档为一个文档节点
+b)元素节点:每个HTML元素都是元素节点
+c)文本节点:HTML元素内的文本
+d)属性节点:HTML元素的属性
+e)注释节点:
+ps:<html>节点没有父节点,它是根节点root
+2.方法
+a)appendChild():把新的子节点添加到指定节点
+b)removeChild():删除子节点
+c)replaceChild():替换子节点
+d)insertBefore():在指定子节点之前插入新的子节点
+e)createAttribute():创建属性节点
+f)createElement():创建元素节点
+g)createTextNode():创建文本节点
+h)getAttribute():返回指定的属性值
+i)setAttribute():把指定属性设置或修改为指定的值
+ps:获取节点时,要注意js代码要在该节点之后
+3.属性
+a)innerHTML:可以获取或改变任意HTML元素,甚至<html>和<body>,它可以获取到指定标签内所有的内容包括标签
+b)innerText:只能获取文本内容,不包括标签
+c)outerHTML:除了获取innerHTML的全部内容外,还获取标签本身
+d)nodeName---节点名
+①nodeName属性的值是只读的
+②元素节点的nodeName与标签名相同,且为大写
+③属性节点的nodeName与属性名相同
+④文本节点的nodeName始终为#text
+⑤文档节点的nodeName始终为#document
+e)nodeValue---节点值
+①元素节点的nodeValue为undefined或null
+②文本节点的nodevalue为文本本身
+③属性节点的nodeValue为属性值
+f)nodeType---节点类型,只读
+
+g)childNodes:访问选定元素下的所有子节点的列表,返回一个数组,对ie浏览器来说,节点之间的空白符不算文本节点,但对于其它浏览器来说,一个空白符,类似于标签与标签之间的空格算一个文本节点
+e)
+①firstChild,返回第一个子节点,如果没有则返回null, ②lastChild返回最后一个子节点,没有则返回null
+f)parentNode: 获取指定节点的父节点
+g)
+①nextSibling: 获取指定节点后紧跟的兄弟节点
+②previousSibling:获取指定节点之前紧跟的兄弟节点
+h)根节点
+①documentElement:返回全部文档
+②body:返回文档主体
+4.访问元素节点
+a)getElementById():返回单个元素
+b)getElementsByTagName():返回一个数组
+c)getElementsByClassName():返回一个数组
+5.改变HTML样式
+访问HTML元素的样式对象style并设置其样式的值
+e1-12.25
+创建时间：	2017/12/25 星期一 下午 9:38
+
+一.JavaScript
+1.what? 
+JavaScript是一种基于对象和事件驱动并具有安全性能的脚本语言.
+2.特点
+a)能向HTML页面中添加交互行为
+b)脚本语言,语法类似于java
+c)解释性语言,边执行边解释
+3.引用方式
+a)使用<script>标签,该标签可以出现在文档的任意地方,只要这些代码能够在执行前被加载到内存即可.
+b)外部导入:<script src="" languag="javascript"></script>, 导入的外部js文件不能包含<script>标签
+c)用于标签中: 事件类型句柄="javascript: js代码;" ,如果js代码写的是一个函数的话,那么需要调用该函数
+二.变量
+1.js中声明变量只用var
+2.变量也可以不经过声明便直接使用,但不推荐
+3.对于js来说,定义在函数外的变量一定是全局变量,定义在函数内且声明var的变量是局部变量, 如果没有var声明,则为全局变量.
+4.一个变量如果已被声明并赋值后,再次声明该变量, 其值不会丢失.
+三.数据类型
+七种数据类型
+1.字符串string,与java中的String类型类似,有length属性,对字符串操作的一些常规方法
+2.数字number,包含整数和小数
+3.布尔boolean
+4.undefined: 表示该变量没有值,声明变量时若没有赋予其初始值,那么将被赋为undefined.
+5.null.与undefined相等,表示一个空值, 可以通过将变量的值设为null来清空变量.
+6.对象object
+ps:其中string, number, boolean, undefined, null为原始类型
+JavaScript的变量均为对象, 声明一个变量时便创建了一个对象
+三.JavaScript对象---带有属性和方法的特殊数据类型
+1.访问属性: ①对象名.属性名 ② 对象名["属性名"]
+2.创建js对象
+a)直接定义并创建对象的实例
+    ①对象名 = new Object();
+    之后可以直接通过 对象名.属性名 为该对象添加属性,也可以同时为其属性赋值
+    ②对象由花括号分隔, 括号内部对象属性的名称和值以值对的形式(name : value)来定义,属性之间由逗号分隔
+    对象名 = {属性名 : 属性值, ....};
+b)通过定义构造函数来创建对象,与java类似
+3.为对象添加方法需要在对象的构造函数内定义方法
+4.for...in循环---用于循环遍历对象的属性
+    for (i in 对象名) {
+        对象名[i] 可以获得可以获取到每一个属性的值
+    }
+四.js的内置对象
+1.Number对象---原始数值的包装对象
+a)所有数字皆为64位
+b)创建: new Number(值) 或 Number(值), 前者Number()和new运算符一起作为构造函数调用,它会返回一个新创建的Number对象,传入的值为该对象的数值, 如果不使用new运算符,则把Number()当做一个函数来调用,会把传入的值转换成一个原始数值并返回,若转换失败则返回NaN
+c)Number对象的几个属性: 最大数MAX_VALUE, 最小数MIN_VALUE.
+ps: window.parseInt()函数转换的原则:若出入的字符串从第一个字符开始就无法转换那么会返回NaN,否则便只会转换为数字的部分
+6.String对象
+a)创建方法一致
+b包含一些类似于java的对字符串处理的方法,还有些方法能够使其字符串显示出不同的效果,bold()方法使其加粗,link()方法将其显示为a链接
+7.Date对象
+a)创建方法: 构造函数创建 new Date(), 单独使用的Date()函数只会返回一个当日的日期和时间的字符串.
+b)方法
+①get/setDate()/Day()/Month()/FullYear()/Hours()/Minutes()/Seconds()/Millseconds()
+分别对日期的 天, 星期几, 月份, 四位数年份, 小时, 分钟, 秒, 毫秒的获取或设置的方法. 月份比实际的月份要少一, 星期几的数值从0开始, 星期日为0
+②getTime(): 返回从1970-1-1至今的毫秒数
+③增加日期的某一部分的值时如果会进位那么日期对象会自动的完成进位.
+8.数组Array对象
+a)创建:
+①当调用构造函数时只传递一个数字参数时,将返回一个具有指定数字个数的,元素为undefined的数组.
+②当传递了其它参数时,便用其参数指定的值初始化数组
+③数组创建并直接添加元素的两种方式 var arr=new Array(元素...);或者var arr=[元素...];
+b)方法
+①join:将数组的所有元素放入一个字符串,并通过传入的字符串进行分隔,如果不传值则默认使用逗号
+②push:向数组的末尾添加一个或多个元素,返回新的长度.
+9.Boolean对象
+创建方法一致,如果省略参数或者设置为0, -0, null, 空字符串, false, undefined或NaN, 则其值为false,否则就为true
+10.Math算数对象
+11.RegExp对象
+a)创建: 构造函数 new RegExp(值);其值为要寻找的值,一个字符串
+b)方法
+①test(字符串):在指定字符串中检索该对象定义好的寻找的值,返回true或false
+②exec(字符串):如果检索到,那么返回被找到的值,否则返回null
+③compile(字符串):改变要寻找的字符串变为指定字符串.
+
+
+
+e0-12.24
+创建时间：	2017/12/24 星期日 下午 1:52
+
+一.定位position
+1.属性
+a)static: 默认值,没有定位,忽略top,bottom, left,right或z-index声明
+b)absolute: 绝对定位, 
+①绝对定位的元素会提升一个层级,从正常文档流中完全删除,
+②相对于除static定位以外(即已定位的)的第一个父元素进行定位,如果没有,则相对于浏览器窗口进行定位
+③使用绝对定位的元素不管它之前在正常文档流中是何种类型,之后都会成为块级元素
+c)relative: 相对定位
+①相对定位的元素也会提升一个层级,但他不会从正常文档流中删除
+②相对于其本身进行定位
+③它原本所占的空间任然保留
+d)fixed: 固定定位, 绝对定位的一种, 永远都相对于浏览器窗口进行定位, 且它永远都会固定在浏览器的固定窗口,不会随着浏览器的改变而改变
+二.元素层级z-index
+1.z-index设置元素的堆叠顺序,属性值可以设置为正值或负值,值越高越优先显示,默认为auto,与其父元素的堆叠顺序相等.
+2.z-index的设置仅对浮动的元素以及开启定位的元素有效
+三.元素不透明级别opacity
+其属性值从0.0(完全透明)到1.0(完全不透明)
+d9-12.23
+创建时间：	2017/12/23 星期六 下午 8:37
+
+一.盒子模型div
+通常一个盒子div包含①外边距②边框③内边距④内容 这四部分组成
+1.边框
+a)边框颜色border-color
+border-top/right/bottom/left-color 上右下左边框颜色
+border-color设置四个边框的颜色,为两个值时分别为上下和左右的值, 三个值时对应上右下, 左的值对应右的值
+b)边框粗细: 瘦的thin, 一般的medium, 浓的thick以及像素值
+c)边框样式border-style: 无none, 隐藏hidden, 实线solid, 虚线dashed
+d)同时设置边框的粗细, 颜色和样式
+    border: 粗细width 颜色color 样式style
+2.为div设置的宽度和高度设置的是内容区域的宽度和高度,增加内边距, 外边距和边框并不会影响到内容区域的大小, 但会影响增加整个元素框的总尺寸
+3.内边距padding---边框与内容之间的空白区域
+a)padding属性不允许使用负值
+b)内边距的百分比数值是相对于其父元素的width值计算的,父元素的width改变它们也会改变,
+c)上下内边距与左右内边距一致,所以上下内边距的百分比也是相对于父元素的width设置,而不是根据height设置
+4.margin---围绕在元素边框的空白区域,设置外边距会在元素外创建额外的空白区域
+a)margin属性接受任何长度单位, 百分比, 以及负值
+b)外边距的百分比数值计算和内边距一样,都是基于父元素的width值计算的
+c)值赋值
+
+d)设置margin属性为auto属性值是, 会设置最大外边距应用于当前元素, 当将margin的left和right设置为auto时,它会根据浏览器的尺寸,将左右两边的外边距设置为相同的值,导致其居中
+e)设置盒子的上边距和左边距时会发生移动,右边距和下边距不会
+f)外边距合并: 当两个垂直的外边距相遇时,它们将形成一个外边距.合并后的外边距的高度等于两个发生合并的外边距的高度中的较大者.只发生在普通文档流块级元素框, 行内元素框,浮动框或绝对定位之间的外边距不会合并
+二.display属性
+1.常用的值
+a)none: 此元素不被显示
+b)block: 此元素被显示为块级元素, 前后自带换行符
+c)inline: 默认, 此元素会被显示为内联元素,前后没有换行符
+d)inline-block: 此元素显示为内联元素, 但其内容作为块级元素显示,能使其元素既具有宽高度的特性,又具有同行的特性
+ps: visibility:hidden 和 display:none都能使其元素不显示,但前者会使其不见元素依然占据空间,而后者不会
+三.内联元素的盒子模式
+1.内边距: 左右内边距与垂直内边距的设置起作用
+2.外边距: 左右外边距设置起作用,但垂直外边距不起作用
+3.内联元素的外边距不会合并,而是会相加
+四.overflow
+规定当内容溢出元素框时发生的事情
+1.取值
+a)visible: 默认值, 内容不会被修剪,会呈现在元素框之外
+b)hidden: 内容会被修剪, 其余内容不可见
+c)scroll : 内容会被修剪, 浏览器会显示滚动条以查看其余内容
+d)auto: 如果内容要被修剪,浏览器这时会显示滚动条以便查看
+五.浮动float
+1.使其元素框脱离文档的普通流,浮动的元素框可以向左或右移动,直到它的外边缘碰到包含框或另一个浮动框的边框为止
+2.如果包含框太窄,无法容纳水平排列的浮动元素,那么其它浮动块会向下移动, 如果各个浮动元素的高度不同, 那么向下移动排列的浮动元素可能会被其它浮动元素卡住
+3.浮动的元素不会盖住文字, 文字会自动的环绕在浮动元素周围
+4.清除浮动clear
+使当前元素不再受左侧或右侧浮动元素对该元素的影响
+a)left      清除左侧浮动的元素对当前元素的影响
+b)right    清除右侧浮动的元素对当前元素的影响
+c)both    清除两侧浮动的元素对当前元素的影响 ，对他影响最大的那个元素
+d)none    默认值，不清除浮动
+六.高度塌陷
+1.在文档流中, 父元素的高度在不设置的情况下是由其子元素的高度决定的, 当子元素设置浮动后,脱离文档流,没有子元素支撑父元素的高度的话会导致父元素高度塌陷
+2.解决方法
+a)向父元素中添加overflow : hidden
+b)在父元素的尾部添加空白的块级元素div,并使用clear清除浮动对该div所造成的影响即可使该div撑起父元素的高度
+c)为父元素添加伪类选择器 :after, 设置content属性为"", display为block, 并清除浮动, :after可以在元素的最后添加内容. 该方法可以在该父元素的最后添加一个空的文本,并设为块级元素同时清除浮动,使该块级元素称为父元素的高度
+d8-12.22
+创建时间：	2017/12/22 星期五 上午 9:25
+
+一.HTML长度
+1.px(像素): css中默认 90px = 1英寸
+2.em : 受影响于font-size,一单位的em等于font-size的大小
+3. %百分比: 也受影响于font-size,适用于制作适应型页面
+二.字体font
+1.浏览器默认字体大小为16px;
+2.设置字体颜色使用color设置,没有font-color属性
+三.文本text
+1.行间距 = 行高line-height - 字体大小font-size
+四.伪类选择器
+ps:标签名和伪类名之间除了 : 不能有空格
+1.语法:    标签名:伪类名{声明;}
+2.伪类名
+a). link  未点击过的a链接
+b). visited 点击过的链接
+c). hover 悬浮时
+d). active 点击时
+3.a标签的伪类的设置顺序:  link>visited>hover>active
+hover和active的顺序不能对调, link和visited可以随意对调,但必须在hover和active前面
+五.设置鼠标形状---cursor样式
+1.常用的几个属性
+a)wait: 正忙, 一个沙漏
+b)help: 显示帮助, 一个问号
+c)pointer: 一个手指
+六.块级元素(block)与行内元素(inline)
+1.区别
+a)块级元素独占一行,前后自带换行符; 行内元素会在同一行上水平方向排列
+b)行内元素设置width和height无效, 块级元素设置有效
+c)块级元素在不设置宽度的情况下,如果有父元素那么它的宽度就是父元素的宽度,但高度不会被父元素填充;
+行内元素的宽度就是包含的文字或者图片的宽度且不可改变,其宽高与父元素无关,本身的高度为其默认的line-height行高的高度值
+d)块级元素可以包含行内元素和块级元素,但行内元素不能包含块级元素,但是有部分块级元素不能包含块级元素,常见的比如h1~h6, p, dt,当在它们之中遇到块级元素时,这些元素会在包含的块级元素之前被强制结束.
+2.常见的块级元素
+div, p, 所有列表及其默认子元素, 表格及其所有默认子元素, 域filedset和域标题legend, form表单, h1~h6, hr,  预格式化文本pre, 地址address, 表格标题caption
+3.常见行内元素
+a, 字体加粗b, br, code, 斜体强调em, 斜体i, img, input, 为input元素定义标注的label, 选择框select, span, 加粗强调strong, 多行文本textarea
+4.块级元素的宽度在不设定的情况下取决于父元素, 其高度取决于所包含子元素的高度, 行内元素的宽高取决于其中的内容
+d7-12.21
+创建时间：	2017/12/21 星期四 下午 7:24
+
+一.导入css外部样式
+1.链接式: 在head标签中添加link标签
+<link href="css文件路径" rel="stylesheet" type="text/css">
+2.导入式
+在head标签中添加style标签并在其中导入
+<style type="text/css">
+    @import url("css文件路径");
+</style>
+3.链接式和导入式的区别
+a)link标签属于XHTML. @import属于CSS2.1, 不兼容CSS2.1的浏览器@import导入无效
+b)link链接的css文件会先加载至网页在编译显示,@import导入的css文件在HTML结构显示出来后再被网页加载
+
+二.CSS样式优先级
+1.行内 > 内部 > 外部, 条件是内部样式表在外部样式表后面, 因为实际上还是从上至下加载
+2.id选择器 > class选择器 > 标签选择器
+元素采用样式的优先级
+3. !important 可以让某个css样式具有第二高的优先级,写在指定样式的分号 ; 前. 最高优先级依然是行内样式表
+三.复合选择器
+1.后代选择器
+a)外层元素写前面,内层元素写后面,中间用空格分隔
+
+
+
+    外层元素 内层元素
+选择外层元素内部的所有内层元素,即后代元素,不仅限于直接后代
+2.子选择器
+外层元素>内层元素:
+选择父元素为外层元素的所有内层元素,只选择直接后代
+3.相邻兄弟选择器
+元素1+元素2: 选择紧挨在元素1后面的所有元素2,元素1和元素2为同级关系
+4.交集选择器
+a)第一个必须是标签选择器,第二个必须是类选择器或ID选择器,选择器之间必须连续
+    标签选择器类选择器/id选择器
+b)通常用于选择某个标签下的类选择器的元素
+5.并集选择器
+多个选择器通过逗号连接而成
+元素1,元素2,元素3...
+选择所有为并集选择器中元素的元素
+
+四.CSS中的继承
+1.子标签可以继承父标签的样式
+2.子标签的样式无法影响父标签
+d6-12.20
+创建时间：	2017/12/20 星期三 下午 2:31
+
+1.form表单中的单选框radio根据其name值来区分是否为一组,一组单选框下的每个单选框的name值都是相同的,且同一时间只能有一个被选中
+2.下拉框select可以一次选择多个,需要在select标签中添加multiple属性并设置为true或multiple, select标签的size属性为显示的option个数
+3.input标签中的属性
+①size: 表单元素的初始宽度,当type为text或password时,大小以字符为单位, 为其他类型时, 以像素为单位
+②maxlength: type为text或password时, 输入的最大字符数
+③将一个表单元素设置为disabled或readonly都能使其无法修改,但设置为disabled的元素的值无法正常提交到后台
+4.表单的域和域标题
+fieldset标签为一个域, 其中的legend为域标题, legend标签对中的内容会作为域的标题显示在域边框的左上边框的中间
+5.label标签的标注
+为表单元素定义标注,当点击label元素中文字时,将焦点转到对应的表单元素上.
+通过在label标签中添加for属性实现, 其中for属性的值为要跳转的表单元素的id
+6.form表单可以可以添加onsubmit="return 函数()"来使其提交前调用函数并根据其返回值来决定是否真正提交,但如果是在js中调用form表单元素的submit()函数则不会触发onsubmit事件
+7.Document对象其中包含了 forms[], images[], links[]等集合,这些集合中包含了页面中所有form对象, image对象, area和link对象, 可以通过document.forms[索引或form对象的id] 访问指定form对象, 访问所有form对象中的所有元素都可以通过 form对象名.子元素id 访问, 如果有多个id相同的子元素,则获取到一个数组
+d5-12.19
+创建时间：	2017/12/19 星期二 上午 10:54
+
+1.meta标签
+用于提供页面的元信息
+<meta name = "" content = "">, name的值为页面元信息的一些名称, content为该元信息的值
+常用的名称name有 keywords,一些搜索引擎会根据name为keywords的值对网页进行分类.
+
+2.a标签
+链接标签
+a)属性
+①href: 链接的URL路径
+②target: 目标窗口打开位置, _self为本页面, _blank为新窗口
+b)锚连接---就是从a标签跳转至另一标签
+①从同一页面的a位置跳转到b位置
+a位置为一a标签, 且该a标签的href属性为 #b位置标签的id, 如果是跳转至一个a标签,那么href的属性也可以为 #b位置标签的name
+c)功能性链接
+可以打开某些应用或者打开功能性页面的链接,例如将a标签的href属性设为 mailto:邮箱 可以打开系统装好的发送邮件功能
+
+3.map标签
+定义图像点击区域的集合
+a)必须配合area标签使用
+b)img标签通过设置usemap的属性来指定引用哪个map标签,其usemap的值必须与指定map标签的id和name值一致
+3.1 area标签
+a)单独出现,不成对
+b)必须使用在map标签中
+c)属性
+①shape: 可点击区域的形状,包含矩形rect, 圆形circle, 多边形poly
+②coords: 定义可点击区域图形的坐标,rect需要两个坐标,左上角和右下角的坐标, circle需要三个值, 分别为圆心的横坐标,纵坐标, 以及半径, poly的值为多边形各顶点的坐标值
+③href与target属性与a标签一致
+
+4.列表
+a)无序列表ul(unorder list)
+属性type指定用什么来作为项目符号,取值包含disc---实心圆,默认. square实心正方形. circle空心圆
+b)有序列表ol(order list)
+属性type的取值: 1---使用数字作为项目符号, A/a 使用大写/小写字母作为项目符号. I/i 使用大写/小写的罗马数字作为项目符号
+c)定义列表dl(define list)
+以dt标签来定义列表项,为列表的第一级,其后的dd标签为该列的第二级,无项目符号和显示顺序
+e)有序无序列表的嵌套也可以达成定义列表的层级效果,定义列表的特点就是无项目符号和显示顺序
+
+5.table标签
+a)属性
+①cellspacing: 单元格间距
+②cellpadding: 单元格填充,即单元格内内容与单元格边框的距离
+5.1 th,td标签属性
+①colspan: 一行跨越多列, 即合并列,合并后只有一行
+②rowspan: 一列跨越多行, 即合并行,合并后只有一列
+③valign: 垂直对齐方式, top:顶部对齐. middle:中部对齐, bottom:下部对齐
+
+6.单行代码标签code
+<code>代码语言</code>
+多行代码使用pre标签, pre 标签是预格式化的文本, 包含在pre标签的文本中的空格和换行符都会被保留
+d4-12.13
+创建时间：	2017/12/13 星期三 下午 2:47
+
+一.触发器 Trigger
+根据用户的某个insert, delete, update 操作自动执行的一段SQL代码
+1.触发器的类型:
+before: 在向表添加数据之前执行
+after: 在表中添加完数据之后执行
+instead of: 替代触发器, 把一个操作用另一个操作替代
+2.两种临时表
+a) :new  存放要添加到表中的新纪录,进行insert, update操作该表中会有数据
+b) :old 存放从表中删除的旧数据,进行delete, update 操作该表中会有数据
+c) new和old这两张临时表的表结构和DML语句所影响的表结构一致,且操作完毕以后,这两张表消失
+3.触发器的创建
+create or replace trigger 触发器名
+after  //触发的时间
+insert [or update] [or delete]  //触发的事件
+on [用户.]表名  //在哪张表上创建触发器
+for each row  //每影响一行数据便执行一次触发器
+declare
+
+begin
+    //if-else语句
+    if inserting/updating/deleting then//对应增删改操作
+        // PL/SQL或SQL语句
+    else
+        
+    end if;
+end;
+
+d3-12.12
+创建时间：	2017/12/12 星期二 下午 7:13
+
+一.泛型
+1.自定义泛型类
+在类名或接口名后面添加一对尖括号 <泛型类型> 一般用T表示,Type的缩写,且T只能是引用类型,不能用基本类型填充
+a)当实例化泛型类的对象时指明泛型类的类型,那么其中所有使用泛型的位置都变为实例化所指定的类型
+b)当定义了泛型类,但实例化是没有指明泛型,那么默认类型时Object
+c)在继承泛型类或者泛型接口时可以指定父类的泛型类型使其子类受到指定泛型的影响
+d)普通静态方法中不能使用类的泛型,但泛型方法可以,泛型是在类实例化之后才能确定实际类型,但static修饰的内容是早于对象的
+e)不能再catch块中使用泛型
+2.泛型方法
+在方法的修饰符之后, 返回值之前添加一个 <泛型>,那么该方法就成了一个泛型方法, 通常把参数的类型定义为 该方法的泛型类型 ,把返回值类型也定义为 该泛型,就可以使其返回值类型动态的与参数类型相同
+3.泛型和继承的关系
+如果B是A的一个子类型(子类或者子接口),G是一个有泛型声明的类或接口,G<B> 不是 G<A> 的子类. 具有继承关系的类作为泛型类的类型并不会使其泛型类具有继承关系
+4.通配符 ?
+a)使用? 泛型的对象是 各种泛型的父类
+b)读取List<?> 的对象中的元素十分安全,因为不管其真是类型是什么,它包含的都是Object
+c)不能向List<?>的对象添加元素, 因为不知道其确切的元素类型,不过可以添加null,因为null是所有类型的成员
+d)限制通配符
+① <? extends 引用类型>: 只允许泛型为指定类型以及其子类的引用调用,只能放其本身及其子类
+② <? super 引用类型> : 只允许泛型为指定类型及其父类的引用调用,只能放其本身及其父类
+③ <? extends 接口名>: 只允许泛型为实现指定接口的实现类的引用调用,只能放该接口的实现类
+d2-12.8
+创建时间：	2017/12/8 星期五 上午 9:38
+
+一.jdbc
+jdbc(Java Database Connectivity): java数据库连接技术,提供统一的api对关系型数据库进行访问
+1.常用类和接口
+a)类
+DriverManager: 负责使用数据库驱动获取数据库的连接,需要提供数据库的url,用户名和密码
+b)接口
+①Connection: 连接,一次会话(session),代表着程序与数据之间的连接,通过使用DriverManager的静态方法getConnection()方法获取
+②Statement: 负责sql语句的传递,通过Connection的createStatement()获取,用于执行静态的sql语句,即把所有内容写在sql语句中的语句
+方法:
+i)boolean execute(String sql): 可以执行任意sql,如果返回true则表示有查询结果,可以通过getResultSet()获取查询到的结果集,如果返回false,则表示执行的是修改操作,可以通过getUpdateCount()获取影响的行数
+ii)int executeUpdate(String sql): 执行DML语句,返回所影响的行数,返回值大于0表示操作成功, 等于0操作失败
+iii)ResultSet executeQuery(String sql): 执行DQL语句返回查询结果集
+③PreparedStatement: 继承自Statement接口,表示预编译的sql语句对象,用于执行带 ? 占位符的sql语句.通过Connection的prepareStatement方法获取
+④CallableStatement: 用于执行sql存储过程的接口,就是执行数据库中本身自己的操作方法
+ResultSet: 结果集,包含了select语句查询得到的数据,包含两部分
+第一部分: ResultMetaData,可用于获取相关ResultSet对象的列的类型和属性的类,不管是否查到数据都有列信息
+getColumnCount():获取列的总数;
+getColumnName():获取实际的列名
+getColumnLabel():获取列名,如果查询语句中对列起了别名,那么获取到的便是别名.
+第二部分:数据,一个二维表
+
+2.Oracle数据类型与java数据类型的对应关系
+①char---String
+②varchar2---String
+③number(n)---int, long...
+④number(n, m)---double
+⑤date---java.sql.date
+
+3.jdbc中的事务
+如果一个事务由多个SQL语句构成,由于工具类中每次操作都会创建一个新的Connection连接对象,每个操作使用的都是自己的连接,则无法统一管理,所以一个事务中包含多个操作时要求使用的Connection连接对象是同一个
+a)操作方式
+①事务开始前取消Connection的默认提交行为: 调用Connection对象的setAutoCommit(false)把自动提交设为false关闭自动提交
+②如果操作都成功了,这时才调用Connection对象的commit()方法进行提交
+③如果出现异常,则在catch块中调用Connection对象的rollback()方法进行回滚.
+
+d1-12.7
+创建时间：	2017/12/10 星期日 下午 5:03
+
+一.SET运算符
+也就是集合操作
+1.union / union all
+得到两张表结果的并集,union去重, union all 不去重
+2.intersect
+返回两个结果集的交集
+3.minus
+返回两个结果集的差集,即去除第一个结果集中两个结果集共有的部分
+注意事项:
+1.多张表中的select列表中的列名和表达式要在数量和类型上相对应
+2.order by子句只能出现在整个语句的最后面,order by子句可以使用第一个查询中的列名,别名或相对位置.但不能使用表别名.列名的格式来排序
+3.除了union all以外,其他的SET操作符都会去重并按照第一个查询的第一列进行升序排列
+4.如果多表的select语句的列或表达式的数量和类型不相对应,可以在缺少对应的表相应的位置上加上对应类型的转换函数并转为null使之相对应,或者直接填上null或填入对应类型的数据也可以
+5.使用相对位置进行排序:
+可以在每个结果集的select语句添加一列数字列,并在order by子句使用该列的序号值进行排序,如果不想显示该列,则可以使用 column 列名 noprint命令来使其不显示
+
+二.删除重复数据
+delete from 表名 where rowid not in (select min(rowid) from 表名 group by 列名)
+每一行的数据的rowid都是不重复的,先根据重复的列名进行分组并使用max或min函数找到唯一要保留的那一行,再用not in去除rowid不等于保留的rowid的记录达到去重的效果
+三.子查询
+单行或多行子查询决定了另一边运算符,而单列或多列决定了需要几列来与子查询的结果进行匹配
+1.单列子查询---在一行中只返回一列的子查询
+oracle9i中单列子查询可用于decode和case-end以及select中除了group by以外的所有子句中
+2.相关子查询
+相关子查询按照一行接一行的顺序执行,主查询的每一行都执行一次子查询,子查询中使用主查询中的列
+3.exists操作符
+检查在子查询中是否存在满足条件的行,如果存在满足条件的行,则不在子查询中继续查找并返回true,如果不存在满足条件的行,则返回false并继续在子查询中查找.
+比如可应用于查找出哪些人是公司的管理者
+
+只要满足子查询的条件便表明是管理者,满足条件便返回true,为true就显示其信息,子查询中主要关注的是是否满足条件,并不关注要显示什么内容
+4.not exists
+5.with子句
+a)with子句的使用
+with with子句名 as (select语句)
+b)作用
+①避免书写重复相同的语句块
+②with子句将该子句中的语句执行一次并存储到用户的临时表空间中
+③提高效率
+
+四.PL/SQL块
+1.由三个块组成,声明部分,执行部分,异常处理部分
+DECLARE
+    声明部分
+BEGIN
+    执行部分
+EXCEPTION
+    执行异常部分
+END;
+其中执行部分是必须的
+2.将查询结果赋给变量:
+ select 列 into 变量名 from 表名 where..
+3.打印: dbms_output.put_line(打印的内容);
+4.动态获取数据类型
+在声明变量时 在变量名的后面 使用 表名.列名%type 即可获取到该表的某列的类型
+5.声明一个记录类型
+type 类型名 is record (变量名1 类型, 变量名2 类型,......)
+然后可以创建该类型的变量,可以给该类型的变量赋值取值
+6.流程控制
+a)条件语句
+①if语句
+    if 布尔表达式 then
+        PL/SQL和SQL语句
+    end if;
+②if-else语句
+    if 布尔表达式 then
+        PL/SQL和SQL语句
+    else
+        其它语句
+    end if;
+③if-else-if语句
+    if 布尔表达式 then
+        PL/SQL和SQL语句;
+    elsif 布尔表达式 then
+        其它语句;
+    else
+        其它语句;
+    end if;
+    注意elsif
+b)循环语句
+①循环
+loop
+    语句; //循环体
+exit when 布尔表达式; //循环条件
+    i := i + 1; //迭代条件
+end loop;
+②while循环
+while 循环条件 loop
+    循环体;
+    迭代条件
+end loop;
+③for循环
+for 循环变量 in 起始值...终止值 loop
+    循环体;
+end loop;
+
+
+d0-12.6
+创建时间：	2017/12/7 星期四 上午 8:44
+
+一.约束:通过各种约束来保证表中数据的完整性
+1.分类
+a)not null: 非空约束
+b) unique: 唯一约束,自动给该列添加唯一索引,可以有null值
+c)primary key: 主键约束, 自动给主键列添加聚集索引,一个表中通常只有一个主键,不过一个主键可以包括多行列.不能存在null值,就是一个不能包含null值的唯一约束
+d)foreign keu: 外键约束, 该列的值来自其他表(父表)的主键或者唯一键,且该列的类型要与父表中主键或唯一键的类型一致.
+e)check: 检查约束, 根据自己设定的规则要求列满足某些要求
+2.添加方式
+a)创建表时直接在列后面添加
+①可以直接指定的有 primary key, not null, default, unique,check.外键的直接指定格式: constraint 外键名 references 父表 (列名)
+②写在对应列后面的列称为列级别约束, 定义时可以在列后面直接指定,一个列级别约束只能作用在一个列上
+③写在所有列后面的约束称为表级别约束,一个表级别约束既可以作用于一个列上,也可以作用在列的组合上
+    constraint 约束名 约束类型 (列)
+④ not null 约束只能是列级别的约束,not null 本质上是一个指定列not null的检查约束
+b)创建完表后通过alter命令追加约束
+alter table 表名 add constraint 约束名 约束类型 (被约束的列)
+追加not null 约束时需要使用modify子句而不是add
+c)外键的级联操作
+①set null: 当删除主表中被引用列的数据时, 把子表中相应的引用的列的值设为null,前提是子表中该列必须允许为空
+                在添加外键时的最后面加上 on delete set null
+②cascade:级联删除,删除主表中被引用列的数据时, 同时删除子表中引用列的值与之相等的数据行.
+                在最后面加上 on delete cascade
+3.删除约束
+alter table 表名 drop primary key | 约束类型 (受约束的列) | constraint 约束名
+删除主键约束只需 drop primary key,
+删除unique需要在drop后添加 约束类型 (受约束的列)
+删除外键或not null 和 check 约束需要在drop后面添加constraint和约束名
+4.约束的禁用与启用
+禁用: alter table 表名 disable constraint 约束名
+启用: alter table 表名 enable constraint 约束名
+二.视图---是一个虚拟表,只存放select语句,不存放数据
+1.创建视图
+create {or replace] [force | noforce] view 视图名 [(列名)]
+as 一条子查询语句
+[with check option [constraint 约束名]]
+[with read only]
+or replace:如果创建的视图已存在,则修改视图
+force: 不管视图所基于的表是否存在都会创建视图
+no force:只有视图所基于的表存在才会创建视图
+with read only:该视图只读
+2.必须要具有创建视图的权限才能创建视图
+授予创建视图权限: grant create view to 用户
+3.删除视图
+drop view 视图名
+ps: 可以通过视图对其基表进行DML操作,需要视图满足一定条件
+4.视图和表的区别
+a)视图是虚拟的表,只存放SQL语句, 执行时是从表中取数据
+   表用来存放数据
+b)通常视图仅用于查询,不一定可以进行DML操作
+   表可以执行CRUD的任意操作
+三.序列---按照一定规则自动增加或减少数字的数据库对象
+1.创建序列
+create sequence 序列名
+[increment by n] : 步进值
+[start with n]: 起始值, 起始值必须大于序列指定的最小值
+[maxvalue n | nomaxvalue]: 序列最大值或无最大值
+[minvalue n | nominvalue]: 序列最小值或无最小值
+[cycle | nocycle]: 序列达到极限后是否继续产生序列值,默认nocycle   
+[cache n | nocache]:预先缓存的序列值,nocache不缓存, cache20是默认选项
+2.常用属性
+nextval: 获取序列的下一个值
+currval: 获取序列的当前值,在使用currval之前必须至少使用一次nextval
+3.一条SQL语句只能从序列中获取一次数值,且不管SQL语句操作是否成功,序列都会向下,所以在同一条SQL语句中不管有几个nextval或currval,获取的值都是相同的
+4.修改序列
+alter sequence 序列名 ....
+除了不能修改序列起始值外,其他的属性都能修改
+5.rowid: 是一个系统自动产生的伪列,是唯一能标示每一条数据库行记录的物理地址
+四.索引---类似于新华字典的音序,用于加快数据的检索速度
+1.分类
+按照是否排序
+a)聚集索引: 相当于新华字典的音序,在索引页中靠前的记录,在表中也靠前.一张表中仅有一个聚集索引,通常为主键列,只要表中创建了主键便会自动添加聚集索引
+b)非聚集索引:非聚集索引是逻辑上连续但物理存储上并不连续的,所以位置不一定一致,通常创建的都是非聚集索引
+按索引列数
+    单列索引
+    多列索引
+    函数索引:以函数的执行结果作为索引,当经常要访问一些函数或表达式时,将其存储值索引,免去再次计算,不能使用聚合函数
+c)按存放数据格式
+    B-Tree 索引, 一个二叉树,默认创建的都是B-Tree索引,保存排序过的索引列和对应的rowid值,适应于精确查询,模糊查询,比较查询
+    位图索引
+    反向键索引
+2.创建方式
+自动创建:
+①聚集索引,只要创建主键便自动添加,
+②唯一索引: 只要设置列为unique约束后便自动添加
+手动创建:
+create index 索引名 on 表(列)
+创建索引时列使用了什么样的格式,只有以匹配格式的列作为条件索引才起作用
+3.适合创建索引的情况
+①表数据量很大
+②查询的结果集占2%-4%左右
+③经常用于做where条件的列或多表连接条件的列
+④查询的列数据范围分布很广
+⑤查询的列中包含大量的null值.null值不包含在索引中
+4.不适合创建索引的情况
+①数据量较小
+②不常用来作为查询条件的列
+③频繁更新的列
+④值较少的列, 即重复数据不多的列
+5.缺点:占用空间, 降低DML操作速度
+6.会导致索引失效的情况
+①在where子句中使用 != 或 <>时
+②在where子句中使用or来连接条件时
+③如果列类型是字符串.但在条件中没有将数据使用引号括起来
+④like模糊查询时以 % 开头
+⑤在where子句中对列进行函数操作,表达式操作,算数运算时, 所以尽量少对原始数据进行修改
+五.同义词
+为数据库对象创建的别名,简化过长的对象名称,对数据库对象的访问进行简化,并方便其他用户的访问.
+只有数据库管理员才有公有同义词的创建和删除权限
+1.创建同义词:  create [public] synonym 同义词名称 for [用户名.]对象名
+2.同义词在数据库链中的作用
+a)数据库链是一个命名的对象,说明一个数据库到另一个数据的路径,通过数据库链可以实现不同数据库之间的通信
+b)数据库链的创建
+create database link 数据库链名 connect to 用户名 identified by 密码 using 'oracle连接串'
+oracle连接串可以是Net Manager中配置好的服务名,也可以是tnsnames.ora文件中相同格式的description中的内容
+c)访问对象通过 object名@数据链名来访问,同义词在数据库链中的作用就是提供位置透明性
+c9-12.5
+创建时间：	2017/12/5 星期二 下午 7:16
+
+一.数据类型
+1.字符型:
+a)char:固定长度字符型数据,默认以字节为单位,默认和最小长度为1,最大长度为2000.一个中文算两个字节
+char(n char):表示以字符为单位,则一个中文算一个字符,固定长度为n位, 当内容不足时自动填充空格至满
+b)varchar2(n): 默认以字节为单位,可变长度,数据为多长就占多长,但不能超过n位
+varchar2(n char):表示以字符为单位
+c)clob: 可变长度字符数据,最大可存储4G
+d)char和varchar2的区别:
+①char长度固定,varchar2长度可变
+②char占用的空间大, varchar2可变比较节约空间
+③char类型查询效率比varchar2高
+常用char作为数据类型的数据: 编号, 性别, 手机号码, 证件号码
+2.数值类型
+a)number: 存整数或小数都可以
+b)number(n): 最大只能存n位的整数
+c)number(p,s): 最多p个数字,其中最多包含s个小数, 整数最大为 p-s 位,
+① s > 0, 只能表示小数,精确到小数点右边s位,并对其s+1位四舍五入
+② s < 0, 只能表示整数,精确到小数点左边s位并进行四舍五入
+③ s = 0, 只能表示整数
+④ p < s, 只能表示绝对值小于1的数字,并且从小数点开始的前s - p 位必须是0,总共保留s位的小数
+3.日期类型
+a)date: 年月日时分秒
+b)timestamp: 精确到毫秒
+4.二进制类型
+blob: 可以存放图片, 声音, 文件, 最大可存储4G
+a)读取blob数据: 通过ResultSet结果集的getBlob方法得到Blob对象,再通过Blob对象的getBinaryStream()方法得到一个输入流对象,这时再通过IO流操作即可.
+二.修改表
+1.修改列的语法
+alter table 表名 modify (列名 数据类型 [default 默认值] )---修改原有列的数据类型及长度或者修改,添加默认值
+8i版本以后可以修改列的名字
+alter table 表名 rename column 原列名 to 新列名
+a)修改已存在的列的数据类型时要求该列的数据为空
+b)修改长度
+①修改数值型长度:当长度向小改时,该列的数要为空,长度向大改时随意
+②修改字符型长度:当长度向小改时,只要修改后的长度能容纳当前已有数据的最大值即可,向大改时随意
+c)修改列的默认值
+默认值的修改不会影响已存在的行,只会影响新增的行
+d)删除列
+删除列时当表只剩一列时无法删除,且被外键引用的列无法被删除
+alter table 表名 drop column 列名--删除单列
+alter table 表名 drop (列名1, 列名2.....)---删除多列
+三.truncate与delete的区别
+truncate属于DDL语句,只能删除表中的所有数据,会释放存储空间,且不可回滚;
+delete属于DML语句,可以删除指定记录,不会释放存储空间,可回滚
+四.表与表之间的关系
+1.一对一:a表中的数据仅仅对应b表中的一行数据
+2.一对多/多对一: 根据立场不同,a表中的一行数据对应b表的多行数据,则b表中的多行数据对应a表中的一行数据
+3.多对多:a表中的一行对应b表中的多行,同时,b表中的一行对应a表的多行,需要创建一个关系表存放二者之间的关系,通过关系表变成两个一对多的关系表示
+c8-12.4
+创建时间：	2017/12/4 星期一 上午 10:38
+
+一.DDL
+1.①添加列
+alter table 表名 add(列名, 数据类型)
+②删除列
+alter table 表名 drop column 列名
+2.插入多行数据
+①insert into 表名 (select * from 表名 where 条件)
+将从一张表中查询得到的数据插入到指定表中,要求查询得到的数据类型的个数与顺序与指定表的相同,可以用于数据备份
+常用于数据删除操作,比如回收站
+②创建表时插入多行数据
+create table 表名 as (select * from 表名 where 条件)
+将一张表中的符合条件的数据存入到一张新表中
+特殊用法:
+create table 表名 as (select * from 表名 where 1 = 0)
+创建一张新表,该表与其查询出来的表数据结构一致,但没有任何约束,用于数据表结构备份
+相关子查询,在子查询中使用主查询中的内容作为条件进行查询,但不适用于使用在from中的子查询
+2.事务(Transaction)
+是数据库中最小的组织单元,由一条或者多条sql语句组成,要么全成功要么都失败
+①事务的特性(ACID)
+a)原子性(Atomicity):指事务像原子一样不可拆分,要么全成功,要么全失败,不可能出现部分成果部分失败的情况
+b)一致性(Consistency):事务完成后不管成功还是失败,其整个系统处于数据一致的状态
+c)隔离性(Isolation):事务之间互相独立,一个事务的执行不会被另一个事务所干扰
+d)持久性(Durability):也称为永久性,指事务一旦提交,对数据的改变就是永久的,不可再被回滚
+3.事务结束
+①显示结束
+提交(commit):使用commit命令实现,以成功的方式结束事务,组成事务的所有DML语句操作全部生效
+回滚(rollback):使用rollback命令实现,以失败的方式结束事务,组成事务的所有DML语句操作全部被取消
+②隐式结束
+隐式提交:当执行一个DDL语句(create, alter, drop, truncate, rename), DCL语句(grant, revoke),或者从SQL*Plus正常退出时(即使用exit或者quit命令退出时)会发生隐式提交
+隐式回滚:当 从 SQL*Plus中强行退出, 客户端连接到服务器端异常中断, 系统崩溃时会发生隐式回滚
+4.事务开启:事务自动开启于上一个事务结束后遇到执行的第一个DML语句
+5.保存点;用于在一个事务中回滚到指定位置
+①savepoint 保存点名: 定义一个保存点
+②rollback to 保存点名: 回滚到指定保存点
+这两条语句不会结束事务的执行,回滚到保存点会取消保存点之后的操作
+6.锁
+保证表中的数据不被多个dml语句同时操作,保证数据一致性的一种机制
+①DML语句会对自己影响的行 添加锁
+②DQL语句本身不会加锁, 但可以通过在 SQL语句末尾添加 for update使其被查询的数据 添加锁
+③锁只有在事务结束后才会被释放
+7.提交或回滚前数据状态
+①数据处于变化前的状态则可以被恢复
+②当前会话可以使用select语句来验证DML操作后的结果
+③其它的会话不能查看由当前用户的DML操作结果
+④受影响的记录被锁定,其它用户不能改变受影响记录中的数据
+8.提交后的数据状态
+①在数据库中变为永久性的,先前的数据状态永久性的消失
+②所有的用户或者会话都可以查询到提交后的结果
+③锁定的记录被释放,可以被其它用户操作
+④所有的保存点被清楚
+9.回滚后数据状态
+①先前的数据状态被恢复
+②锁定的记录被释放
+③所有保存点被清楚
+
+c7-12.1
+创建时间：	2017/12/1 星期五 上午 9:52
+
+一.聚合函数
+    max, min. sum, avg, count
+1.聚合函数会自动忽略null值
+2.max, min, sum, avg找不到数据时会返回null值,而count会返回0
+3.聚合函数不能和普通的列一起使用,要么该列作为分组的条件,要么使用聚合函数包裹起来
+注意的问题
+a)分组函数不能和普通列同时使用
+b)SQL语句中使用group by后,select子句中的列必须是分组的条件或者是被聚合函数包含的
+c)分组函数可以出现在select, having, order by 子句中
+   单行函数可以出现在select, where, order by 子句中
+d)having子句必须跟group by 结合使用,不能单独出现,表示分组后进一步筛选
+e)尽量先使用where进行大范围的筛选,分组后再使用having进行筛选
+f)SQL语句的固定执行顺序
+   FROM-->WHERE-->GROUP BY-->HAVING-->SELECT-->ORDER BY
+所以在select子句中声明的列的别名只能在order by子句中使用
+g)group by 与 order by一起使用时, order by子句中的列要求必须是存在select子句中的列,或者是在order by中使用分组函数包含或者出现在group by中.
+order by的列是选取自select 子句中的, 当与group by一起使用时, select中的列要么出现在group by中要么被分组函数包含, 所以此时order by无法使用未被分组函数包含的不存在select子句中的列
+二.分析函数
+dense_rank()/rank() over(partition by 列 order by 列 [asc] | desc)
+根据partition by后的列进行分组, order by后的列进行排列,并给每个组的每个列一个排名
+dense_rank()会保留order by后的列的值重复的记录
+rank()会去重
+三.top-n
+oracle的分页查询
+a)内层:要进行分页的所有数据
+b)中间:负责给内层查询的数据每一行添加一个rownum作为伪列
+c)外层: 确定要显示的数据区间
+SELECT b.*
+  FROM (
+                SELECT ROWNUM r, a.* FROM (
+                   SELECT * FROM 表名) a
+            ) b
+    WHERE r > begin AND r <= end
+    ---begin = (页数 - 1) * 条数
+         stop = 页数 * 条数
+
+四.多行子查询
+多行子查询必须使用多行运算符
+IN: 等于其中的任意一个值
+ANY: ① > ANY:大于最小值 ② < ANY 小于最大值
+ALL: ① > ALL : 大于最大值  ② < ALL : 小于最小值
+c6-11.30
+创建时间：	2017/11/30 星期四 下午 8:37
+
+一.Oracle中的函数
+1.单行函数:只能处理一行数据
+根据处理数据类型不同分类
+a)字符函数:对字符串进行处理
+    substr(列名, 起始位置, 长度): 字符串截取
+    length(列名): 获取字符串字符长度
+    lengthb(字符串): 获取字符串的字节数
+    instr(列名, 字符串a, 开始位置, 第n次出现):从列对应的数据指定的开始位置开始查找,查找字符串a第n次出现的位置,如果开始位置和n不填则默认为1
+    upper(列名): 转大写
+    lower(列名): 转小写
+    initcap(列名): 首字母大写,其余小写
+    replace(列名, 字符串a, 字符串b): 将列名对应的数据中内容为字符串a的替换为字符串b,如果字符串b不填,则会将数据中的为字符串a的内容消除
+b)数值函数
+    mod(列名, a): 求列中的数据除以a的余数
+    round(列, n): 如果n为正数,则保留至小数第n位,并对n+1位进行四舍五入,如果n为负数,则对小数点左边第n位的数进行四舍五入,如果大于等于5,则第n+1位加1,小数点至n位的数都替换为0
+    trunc(列, n): 同上,但不进行四舍五入
+    ceil(列): 返回一个大于等于该数的最小整数
+    floor(列): 返回一个小于等于该数的最大整数
+c)日期函数:日期类型的数据可以直接进行算术运算
+    sysdate:获取系统当前时间,指的是oracle端的时间,即服务端的时间
+    日期格式: dd-mm-yy
+                   dd-mm-rr---oracle的默认格式
+
+    months_between(a, b):获取两个日期之间间隔的自然月数,a和b必须是日期类型或者是日期格式的数据,通常大的日期放前面
+    add_months(a, m):给日期a添加m个月
+    round(a, 'fmt'): fmt表示对日期的哪一个部分进行保留,对其下一个位置进行四舍五入,四舍五入是根据其数据的中间值进行的.year,yyyy表示保留年份,则对月份进行舍入,如果月份大于6则年份加1,month, mm表示对月份保留,对天舍入,天数大于15则月份加1,dd表示天数,对小时进行舍入,小时大于12则天数加1
+    extract(fmt from a): 从日期a中获取fmt指定的部分
+    last_day(a): 获取日期a当前月的最后一天
+    next_day(a, '星期x'): 获取当前日期的下一个星期x的日期
+d)转换函数
+    to_char(): 把日期或数字转换为字符
+    to_date(str, fmt):把字符串按fmt格式转换为日期,如果字符串符合dd-mm-rr的格式则可以省略fmt
+    to_numer(): 把字符串转换为数字
+    oracle数据库会把字符型的数字自动转化为数字,符合dd-mm-rr或dd-mm-yy格式的字符串转换为日期
+    ps:通过连接符 || 可以将任意类型转换为字符串
+e)通用函数
+    nvl(列, 值): 如果列中的数据为null就使用值替换,否则显示列中的数据,列和值的类型要求必须一致,否则需要对列进行转换
+    nvl2(列, a, b): 如果列不为null, 则显示a, 如果为null, 则显示 b
+    nullif(a, b): 如果a和b相等便显示null, 否则显示a
+    coalesce(表达式1, 表达式2, ....): 返回其中的第一个不为空的参数,参数个数不受限制.但各参数的数据类型必须统一为第一个参数的数据类型
+    case...end:可以进行等值判断或范围判断
+          then中的内容数据类型必须一致
+          ①等值判断: (case 列
+                                when 值1 then 结果1
+                                when 值2 then 结果2
+                                else
+                            end)
+          ②条件判断: (case
+                                when 条件1 then 结果1
+                                when 条件2 then 结果2
+                                else
+                            end)
+
+     decode(字段, 值1, 结果1, 值2, 结果2, 结果3):就是对case-end的等值判断进行简化
+
+二.多表连接
+1.等值连接:同一个表中的列与另一个表中某一列的值相等,建立关系
+2.非等值连接:一个表中的列与另一个表中的某一列通过不等值建立关系,可以是一个范围
+3.连接方法
+    a)内连接: 只查询表之间存在关系的数据
+    b)外连接: 不仅查询关联的,还查询不关联的
+4.笛卡尔积
+一个表中每一行和另一个表中的每一行交叉 出现的数据条数，是两个表中数据条数的乘积
+出现于当缺少关联条件或关联条件失败
+dmbs在执行SQL语句时,总是会先获取多表之间的笛卡尔积后再进行筛选
+5.外连接
+a)左外连接
+就是以等号左边列对应的表为主，全都显示，右边没有对应的数据 以null显示,标记 就是在 等号 的右边 添加 (+)
+b)右外连接：就是以等号右边列对应的表为主，全都显示，左边没有对应的数据 以null显示,标记 就是在 等号 的左边 添加 (+)
+c)全外连接:通过集合运算符把左外连接和右外连接的结果进行拼接
+union: 去除重复内容后进行合并之后按第一列的值进行升序排列显示
+union all:直接合并, 不会处理重复数据
+使用union或union all进行合并的结果集列数必须一致,对应列的类型也必须一致
+6.自连接:一张表中通过列和主键关联,实现上下级关系的建立,给同一张表起别名的方式把一张表虚拟为多张表使用
+c5-11.29
+创建时间：	2017/11/29 星期三 下午 7:58
+
+1.算数运算符: + - * / 要求两边都是数值或者是日期类型
+2.运算符的优先级: 
+a)连接运算符 || 的优先级要高于算术运算符
+b)逻辑运算符 and 的优先级高于 or 和 not
+
+2.select语句的执行过程
+不能在除了order by子句中的地方使用select中的列
+例句: select enam, job from emp where sal > 2000 order by sal desc;
+a)执行from 表名 ,获取表中的所有数据
+b)执行where进行条件筛选,选择符合要求的数据
+c)执行select子句,把需要的列进行保留
+d)执行order by 子句,对select保留的数据进行[]排序
+c4-11.28
+创建时间：	2017/11/28 星期二 下午 6:36
+
+一.数据库常用概念
+1.数据库(DB  DataBase): 一个数据的集合,有一定的格式,冗余少,可以被多个用户共享,和应用程序独立
+    oracle中的数据库,指的是一些文件的集合
+    数据文件:dbf
+    控制文件:ctl
+    日志文件:log
+
+2.数据库管理系统(DataBase Management System  DBMS)
+一个软件,负责数据库的创建,使用,维护的工具,所有的客户端或者应用程序都是通过DBMS来使用数据库中的数据
+
+3.数据库的存放结构模型
+a)层次结构
+b)网状结构
+c)关系结构:以一个二维表的方式存放数据的形式,称为关系,也称为表
+    ①关系操作:就是对二维表进行的一系列操作,比如选择,投影,连接,增加,删除,修改
+    ②关系完整性:保证表中的数据能够完整描述一个实体对象
+        实体完整性:完整的描述一个实体
+        参照完整性:表中的数据在另一个表中存在
+        用户自定义完整性:用户根据需求自定义的设置特殊要求
+
+4.表中的概念
+a)表(关系): 用于存放现实世界中实体的相关的信息,一张表只能存放一类实体的信息
+b)行(记录): 表中的一行数据,每一行对应现实世界中的一个实体,也称为对象
+c)列(字段): 列对应的是实体的属性
+d)值: 每一个实体的属性对应的数据
+
+5.只有本账户登录,才能直接访问其下的表,管理员访问其他用户下的表可使用用户名.表名的形式访问,普通用户访问其他用户其下的表也可如此
+DQL 
+
+二.结构化查询语句(Structured Query Language)
+T-SQL:标准的结构化查询语句
+分类:
+①数据查询语言DQL(Data Query Language):负责从数据表中读取数据---select
+②数据操作语言DML(Data Manipulation Language):负责完成对表中的数据进行添加,删除,修改的操作---insert, delete, update
+③事务控制语言TCL(Transaction Control Language):保证SQL语句能够完整的影响到表中的数据---commit,rollback
+④数据定义语言(Data Definition Language):用于修改数据库结构---create,drop,alter
+⑤数据控制语言(Data Control Language):用于管理用户的权限---grant:授权, revoke:撤回,收回权利
+
+
+c3-11.27
+创建时间：	2017/11/27 星期一 上午 9:01
+
+
+c2-11.24
+创建时间：	2017/11/24 星期五 上午 9:29
+
+1.Set与Map之间的关系
+    Set集合其实是使用Map集合的key来存放数据
+    Map中的数据需要转换成Set集合才可以遍历:keySet和entrySet
+
+2.HashMap和TreeMap的区别
+    ①HashMap是按照Hash算法来存储数据,TreeMap以Tree结构存放数据,按照key来排序
+    ②HashMap的效率比TreeMap要高
+    ③HashMap可以自行设置初始容量与加载因子来进行优化,TreeMap不能自行设置
+
+3.HashMap和HashTable的区别
+    ①HashMap是jdk1.2后添加的,HashTable是一个旧的存放格式
+    ②HashMap线程不安全,HashTable线程安全
+    ③HashMap的效率比HashTable高
+    ④HashMap的key值可以是null且只能有一个,HashTable的key不能为null
+
+4.final,finally,finalize的区别
+    final:一个修饰符,表示终态的
+    finally:java中异常处理的关键字,表示都会执行的代码部分
+    finalize:析构函数,在java垃圾回收时,自动调用,用于释放资源
+
+5.java 7新特性
+①数值常量对下划线支持:常量值中可以使用 _ 进行分割,但是不能在数字的开头,结尾以及小数部分的开头使用
+②可以声明二进制形式的常量,但必须以0b为前缀
+③switch的表达式可以使用String类型
+④catch表达式的调整:一个catch()中可以捕获多种异常,但异常不能是父子关系
+⑤自动资源管理:try后可以添加一个括号()并在里面添加表示自动关闭的资源.
+⑥"<>"类型推断运算符:自动识别的泛型,创建集合对象时,左边使用了泛型,则new的一边可以只使用<>而不用填泛型
+⑦nio2
+⑧G1垃圾回收器:Garbage First的缩写,G1回收器优先回收垃圾最多的区域,它把堆分成了多个区域,G1回收器是一个可预测的回收器,同时对那些内存密集型的程序仍能保持较高的吞吐量
+
+6.java语言可以跨平台的原因
+java语言是半编译半解析的,java源文件被编译为字节码文件,字节码文件可以在不同平台的jvm中被解析运行
+
+7.进程和线程
+进程:指的是一个程序,有独立的代码和内存空间
+线程:指的是进程中的一个任务
+①进程和线程的关系:
+a)一个进程至少有一个或多个线程,而线程属于进程的一部分
+b)进程之间无法共享数据,而线程之间共享内存和数据
+c)进程切换耗费的资源较大,而线程切换开销较少
+
+多线程的实现:
+a)创建线程类,
+继承Thread类,该子类应重新Thread类的run方法
+实现Runnable接口,并实现run方法
+当一个线程启动后.会自动调用run方法
+b)通过线程类的构造方法来创建线程对象
+通过Thread类的无参构造方法创建,适用于继承自Thread类的子类
+通过Thread类的带参构造方法创建,传入Runnable对象,即为实现了Runnable接口的类
+c)运行线程
+调用线程对象start方法运行线程,不过由于start方法是Thread类中的方法,所以实现Runnable接口的类的对象无法使用该方法,这时需要调用Thread类的带参构造方法传入一个线程对象调用start方法
+
+②线程的生命周期
+a)只有一个线程或者别人争不过你
+new-->start-->就绪-->CPU调度-->执行run方法-->执行完所有内容-->结束
+b)当前线程在执行过程中,使用sleep()方法或join()方法以及其它阻塞操作
+new-->start-->就绪-->CPU调度-->执行过程中执行sleep()或join()-->当前线程进入就绪状态-->等待CPU调度
+c)当前线程执行过程中,执行了yield方法
+new-->start-->就绪-->CPU调度-->执行过程中执行yield()-->直接进入就绪状态
+d)当前线程执行过程中,执行了wait方法
+new-->start-->就绪-->CPU调度-->执行过程中执行wait()-->只有在其他线程执行notify()或notifyAll()时,该线程才会进入就绪状态
+e)当前线程执行过程中,调用的方法是同步方法,且正在被其他线程使用,则当前线程进入就绪状态
+
+③常用方法
+a) sleep(long time):休眠多少秒,时间一到便自动进入就绪状态
+b) join(): 把另一个线程加入,当前线程等待别人执行完毕
+c) yield(): 暂时让出,执行那个线程依然由CPU决定
+d) wait(): 让当前线程进入等待状态,如果没有其他线程使用notify()或notifyAll()就会一直等待下去
+e)start(): 使线程处于可以运行的状态,即就绪,但并不一定意味着该线程立刻开始运行,线程的运行取决于CPU的调度
+
+线程的优先级
+a)java提供一个线程调度器来监控程序中启动后进入就绪状态的所有线程,线程调度器按照线程的优先级来决定应该调度哪个线程来执行
+b)java线程的优先级用1~10表示,数值越小表示优先级越低
+c)java的优先级是高度依赖于操作系统的实现的
+d)Thread类有三个常量,表示常用线程的优先级
+Thread.MIN_PRIORITY 1
+Thread.NORM_PRIORITY 5
+Thread.MAX_PRIORITY 10
+缺省是默认为NORM_PRIORITY,即为5
+getPriority():获取线程的优先级
+setPriority():设置线程的优先级
+
+④synchronized; 表示同步的,修饰的内容只能够被一个线程使用,可以避免线程的并发操作,但效率低
+c1-11.23
+创建时间：	2017/11/23 星期四 上午 9:18
+
+一.set集合
+    1.set集合的遍历
+    先转为数组再遍历
+    a)没有泛型的情况下: Object objs = set.toArray();
+    b)转为对应类型的数组:
+    Set<Integer> set = new HashSet<Integer>();    
+    Integer[] i1 = new Integer[1];//作为转型的参考模板
+    Integer[] i2 = set.toArray(i1);//传入一个模板使其转型成对应类型的数组    
+    c)for Each增强for循环遍历
+    2.set集合的add方法添加数据实际上是在map集合里把该数据作为key,map集合底层是用一个table数组保存数据,默认初始容量为16,默认负载因子为0.75,四分之一作为缓冲区,当容量不够时,便回进行扩容,扩大为原容量的两倍
+
+二.list集合
+    1.ArrayList: 使用Object数组存放数据,默认初始容量为10,每当数组无法存放下数据时,便会进行扩容,扩大为原长度的1.5倍
+    通过ArrayList的无参构造方法创建的集合对象默认为空数组,容量为0
+    通过ArrayList的带参构造方法可以传入一个长度设定初始容量
+    2.LinkedList
+    LinkedList的addFirst,addLast等方法是子类自己扩展的方法,所以一般使用LinkedList时不使用父类或接口的引用,而是直接创建LinkedList的引用
+    LinkedList主要用于模拟数据结构,模拟栈和队列
+    栈存放数据的格式是先进后出
+    添加数据,又称为入栈(压栈),
+    读取数据为出栈,每次只能从栈顶获取数据,当读完一个数据后,该数据就从栈中移除了
+    队列存放数据是先进先出
+    3.ArrayList和LinkedList的区别
+    ①ArrayList基于数组,LinkedList基于链表
+    ②ArrayList的随机访问效率比LinkedList高
+    ③ArrayList的插入删除效率比LinkedList低
+    ④LinkedList的方法比ArrayList多6个,多了对First和Last的增查删操作
+三.集合中存放的是各种对象，只能把基本类型进行自动装箱，不会做类型升级
+     subList():只是获取原始集合中部分数据的视图，操作的依然是原始集合,会出现并发修改异常
+     add():把一个整体添加到集合中,作为一个元素使用.
+     addAll():把一个集合中的所有元素添加至该集合中
+     引用数据类型在进行比较时需要实现comparable接口并重写compareTo方法,然后在重写的方法中编写相应的比较规则,通常,返回值大于0表示该对象比比较的对象大,如果小于0则表示该对象比 比较的对象小,否则就是相等
+     字符串进行类型比较的话,直接使用String中已经重写的compareTo方法即可,比较时忽略大小写的比较方法--               compareToIgnoreCase
+四,Map
+    如果Map中的key重复,后添加的数据会覆盖以前的数据
+    HashMap中key可以为null,且只能有一个
+    TreeMap中key不能为null
+    HashMap与TreeMap的区别
+    1.HashMap基于hash表,TreeMap基于平衡树
+    2.HashMap可以自己设置初始容量与负载因子,TreeMap无法设置
+    3.HashMap的执行效率高于TreeMap
+    4.HashMap的key可以为null,有且只能有一个
+       TreeMap的key不能包含null值
+    增强for循环遍历map集合只适用于泛型集合
+b9-11.22
+创建时间：	2017/11/22 星期三 上午 11:41
+
+一.集合---就是一堆对象的整体
+集合大体上分为两种:Collection线型集合, Map键值对集合
+1.集合与数组的区别
+a)数组初始化后,容量不能改变;集合容量没有上限,会自动扩大
+b)数组声明后,其中的数据类型必须一致;集合中可以存放任意类型的对象
+c)数组中可以存放基本类型或引用类型的数据;集合只能存放引用类型的数据
+d)数组的访问效率比集合要高
+
+2.集合中存放的都是对象,所以基本类型存放时会自动转换为对应的包装类,但是不会自动类型升级
+
+3.Set集合在添加数据时,会自动调用对象的equals方法判断两个对象的值是否相等.
+b8-11.21
+创建时间：	2017/11/21 星期二 上午 9:01
+
+一.文件读写(IO流)
+1.文件操作的分类:
+按照读取的内容分类
+    a)字节流
+    b)字符流
+    c)对象流
+按照流的方向
+    a)输入流:负责把文件中的内容读取到内存中
+    b)输出流:负责把内存中的数据写入到文件中
+按照流的功能
+    a)节点流:以流的原始状态进行操作
+    b)包装流:在流的基础进行包装,提供更多的方法进行操作
+
+2.持久化: 把瞬时数据和持久数据相互转化的机制
+    瞬时数据:存在于内存中的数据,程序终止,数据消失
+    持久数据:存放于硬盘中的数据
+
+3.File---文件类,即表示文件又可以表示目录
+创建文件对象:File file = new File(String path);
+获取目录下所有的文件对象(包括文件和目录) File[] files = file.listFiles();
+获取目录下所有文件的名称: String[] names = file.list();
+
+4.读文件的步骤：
+a)确定要读取文件的位置
+        String path="d:\\test\\test.txt";
+b)构建数据流的对象,需要处理FileNotFoundException 类型的异常
+    InputStream in=new FileInputStream(path);
+c)声明变量
+    String str="";//用于存储每一读取的数据
+    byte[] b=new byte[1024];//从文件中每次读取 1024个字节
+d)开始读取数据：read()  返回读取的字节个数 ,需要处理IOException
+    int len=in.read(b);
+    //因为文件多大我们不清楚
+    while(len!=-1){
+        str+=new String(b,0,len);//从字节数组 b 的下标为 0的位置开始转换，转换 len 个数据
+        len=in.read(b);//再从文件中读取一次
+    }
+e)关闭资源 ,需要处理IOException
+    in.close();
+
+5.写文件的步骤：
+a)确定操作的文件，如果文件不存在，自动创建，仅仅创建文件，目录不管    
+    String path="d:\\test.txt";
+b)构建输出流对象,需要处理FileNotFoundException异常
+    OutputStream out=new FileOutputStream(path);
+c)确定要写入文件中内容
+    String msg="";
+d)因为使用的是 字节流    ，必须把字符串转换为字节数组
+    byte[] b=msg.getBytes();
+e)使用write方法把字节数组中的数据写入文件, ,需要处理IOException
+    out.write(b);
+f)关闭资源 ,需要处理IOException
+    out.close();
+
+6.缓冲流:在节点流的基础上,添加一个缓冲区,减少对文件和内存的频繁操作
+字符流的操作
+a)字符流写入
+        String path="d:\\text.txt";
+        Writer out=new FileWriter(path);
+        BufferedWriter bw=new BufferedWriter(out);
+        bw.write("");
+        bw.newLine();//相当于 \r  \n  
+        bw.close();
+        out.close();
+b)字符流读取:
+        String path="d:\\text.txt";
+        Reader in=new FileReader(path);
+        BufferedReader br=new BufferedReader(in);
+        String str = ""; //保存每次读取到的那一行数据;
+        String temp=br.readLine();//读取一整行,直到遇到\n或\r时才认为某一行已终止
+        while(str!=null){
+            str += temp;            
+            temp=br.readLine();
+        }
+        br.close();
+        in.close();
+
+7.对象流---把java中的对象整体写入到文件中,或者把整体从文件中读取出来
+a)前提是该对象所属的类可以进行序列化,实现了Serializable接口或Externalizable接口的对象便可以进行序列化
+b)序列化:能够把对象拆分后加入到数据流中,进行传递的能力
+c)反序列化:把数据流中的数据再重新组装成对象的能力
+如果一个类可以序列化.那么它的所有子类都可以序列化
+d)transient关键字
+    transient修饰的属性不进行序列化的操作,不会写入到数据流中
+    transient修饰的属性反序列化后其值被设定为初始值
+
+8.接口的分类
+    ①标识接口Serializable:一个标记,没有任何行为,一个空的接口
+    ②单功能接口:接口中的方法单一
+       多功能接口:接口中的方法多样
+    ③常量接口:接口中只有常量的声明,接口是常量的最佳存放位置
+b7-11.20
+创建时间：	2017/11/25 星期六 下午 3:56
+
+一.异常---在编码过程中或程序执行中出现的意料以外的事情
+异常类的体系结构
+
+                非检查型异常                            检查性异常
+二.异常处理
+1.自行处理
+使用try块监视可能会发生异常的代码,使用catch对其发生的异常进行捕获,并处理(显示异常信息)
+异常处理的三种情况:
+    a)try中的代码没有发生异常,执行完try块总的内容后,跳过catch块执行后续内容
+    b)try中的代码发生异常,从发生异常的代码处跳出try,catch块有能力捕获异常,则进入catch块执行其中的内容再执行程序后续内容
+    c)catch没有能力捕获异常,程序自动终止
+finally：不管是否发生异常也不管能否处理 finally中的内容必须执行,而且在try块的 return语句前执行，仅仅当try或catch中有System.exit(0)时才不执行,不过如果finally也return一个值的话,则try块中的return语句不再执行.
+2.回避异常---throws
+a)把异常信息向外声明,将来谁调用该方法就由谁来负责处理,通常不建议在底层处理异常,而是尽量把异常向外声明
+b)在方法重写中,如果父类方法有异常声明,那么子类要么不声明异常要么声明一个小于等于父类方法抛出异常的异常
+3.重新抛出一个新的异常---throw
+throw new 异常类型("异常信息");
+a)代码本身没有异常,但是某些参数的值不符合要求时,可以手动引发一个异常
+b)代码发生异常,正确处理后按要求提示用户
+三.
+1.如果使用多重catch,则要么只执行一个,要么一个都不执行,且捕获异常的类型必须由小到大,最大的Exception应该放最后
+2.throws:在方法上声明异常,通知方法的调用者,使用该方法时需要注意的问题
+3.throw:在代码块中向外抛出异常(引发异常).建议throw引发的异常尽量使用运行时异常(RuntimeException)
+4.throws声明的异常和throw引发的异常需要再方法的调用处处理,否则继续向上抛
+5.自定义异常:
+当jdk提供的异常类型无法满足需求时,根据需求编写自定义异常类,要求必须是Exception或其子类的子类,通常使用继承自RuntimeException的异常
+6.通常,要把某些功能封装为jar文件时,其中的所有异常都必须向外抛
+
+b6-11.17
+创建时间：	2017/11/20 星期一 上午 9:33
+
+一.equals方法与hashcode
+1.equals方法:默认,即没有被重写的情况下,比较的是两个对象的内存地址
+2.hashCode方法:返回此对象的哈希码值---根据对象的内存地址进行换算得到的值,而hashCode方法又可以重写,就意味着该方法所返回的哈希码值不一定是内存地址所转换的值
+3.通常情况下不同的对象,拥有不同的hashCode码,不过具有相同的hashCode码不一定是同一个对象
+注意:如果两个对象的equals比较为true,则这两个对象的hashCode码必须相同
+        如果两个对象的hashCode码相同,这两个对象也不一定相同,因为hashCode方法可以重写
+
+二.equals与==
+1.默认的equals方法是使用==进行比较的,即比较内存地址
+2.equals只能用于引用类型的比较中,而==既可以用于比较引用类型又可以用于比较基本类型
+3.equals方法通常会被覆盖,用于比较内存的值是否相同,而==不管怎样都是比较内存地址
+
+三.基本类型与String类型之间的相互转换
+1.基本类型--->String
+    使用String的valueOf方法,
+    valueOf(基本类型)
+2.String--->基本类型
+    使用各基本类型的包装类型.parse方法
+    包装类型.parseXxx(字符串);
+3.自动装箱与自动拆箱---自动将数据的基本类型与包装类型转换的机制
+    注意:自动装箱与自动拆箱机制是在jdk1.5以后出现的
+
+四.String字符串
+1.String是引用类型,不是基本类型,但是可以像基本类型一样操作
+2.String表示一个字符序列(charSequence),对字符串的任何修改都会产生一个新的字符串
+3.String字符串的不变性:String字符串一旦被赋值,其内容不能改变,对字符串的任何修改都会产生一个新的字符串
+4.String是个final修饰的类,不能被继承
+
+五.正则表达式
+String常用正则表达式(regx)的方法有:replace,repalceFirst,replaceAll,split
+    ①[ ]: 表示其中的任意一个字符
+    ②{ }: 表示其紧挨的表达式连续出现的次数
+        {n}: 表示正好n次
+        {n.m}: 表示最少n次, 最多m次
+        {n, }:最少n次,没有上限
+
+六.可变字符串---StringBuffer与StringBuilder
+1.String与StringBuffer的区别:
+a)String一旦初始化,其内容不能改变,如果改变就会产生一个新的字符串
+   StringBuffer是可变字符串,任何修改都会影响原始数据
+b)String每次操作都会产生新的对象,消耗内存较多
+   StringBuffer是在同一块内存中操作字符串
+c)String既可以直接赋值创建,又可以通过new创建
+   StringBuffer只能通过new来创建
+2.StringBuffer与StringBuilder的异同
+异:a)StringBuffer在jdk1.0就有了,而StringBuilder是在jdk1.5后添加的
+    b)StringBuffer是线程安全的,StringBuilder是线程不安全的
+    c)StringBuilder的效率比StringBuffer要高.
+
+七.其他类
+1.Math类
+特点:
+    a)final修饰
+    b)构造方法私有化,且无获取实例的公开方法
+    c)所有属性和方法都是static修饰的
+常用方法:
+    a)radom():获取随机数
+    b)round():四舍五入,只保留整数
+    c)ceil():获取大于或等于当前数字的最小整数,以double格式显示
+    d)floor():获取小于当前数字的最大整数,以double格式显示
+2.日期类
+    ①Calendar
+    通过getInstance()方法获得实例
+    通过Calendar对象的get(Calendar.日期部分格式)获取年或月或日,不过通过该格式获取的月份比正确的月份要少1
+    日期部分格式都是常量,年为YEAR,获取四位数的年,日为DAY_OF_WEEK,周日为1,周六为7
+    ②Date
+    getTime(): 获取1970-01-01 00:00:00到今天相差的毫秒数
+    getYear(): 获取1900年至今年过了多少年
+    getDay(): 获取今天是一周中的星期几.周一为1,周日为7
+3.异常
+    illegalAccessException:对类的请求被拒绝
+b5-11.16
+创建时间：	2017/11/16 星期四 上午 10:32
+
+一.接口
+    在面向对象设计的时候，发现某些类 具有相同的行为，但是不具备 is a 的关系
+    java 提供了 接口 在弥补 单一继承的不足，同样可以实现多态
+1.什么是接口 就是 一些常量和抽象方法的集合
+2.接口的特点:
+接口中的变量 在编译时 自动转换为 常量 ，必须在声明时 赋值
+接口中的方法 都是 public 修饰的抽象方法，如果不写，默认添加
+在jdk 1.8 后 接口中可以定义 普通default修饰的方法
+3.接口,类的继承
+a)类只能继承一个类,但可以实现多个接口
+b)接口可以继承多个接口,不过接口不能继承类
+4.接口和普通类的区别
+a)接口中只有常量和抽象方法,没有构造方法,不能构建对象,必须通过实现类构建
+b)类中有常量,也可以有变量,非抽象方法.有构造方法,可以创建对象
+c)类可以实现一个或多个接口,但是接口不能继承类
+5.接口和抽象类的异同点
+相同:
+    a)都不能直接创建对象,都必须通过子类或实现类构建对象
+    b)都可以包含抽象方法和常量
+不同:
+    a)抽象类可以包含抽象方法和非抽象方法,接口只能有抽象方法
+    b)抽象类必须有构造方法,接口不能有抽象方法
+    c)抽象类可以有常量和变量,接口只有常量
+    d)抽象类中访问修饰符可以有很多,接口只有public
+    e)抽象类可以实现接口
+1.简单保留两位小数:Math.round(): 该方法会将传入的double型或float型的变量四舍五入取整,取整数后一位
+使用Math.round(浮点型变量 * 100) / 100.0 即可简单保留两位小数
+2.引用数据类型的转换
+    ①上溯造型,:向上转型(Upcasting)---子类转换为父类,自动转换
+    前提:具有继承或实现关系
+    ps:向上转换会损失子类中新扩展的属性和方法,仅可以使用从父类中继承的属性和方法,类似于退化
+    ②下溯造型:向下转型(Downcasting)---将父类对象显示的转换为子类类型,强制转换
+    只有曾经向上转换过的对象,才能再向下转换,对象不允许不经过上溯造型而直接下溯造型
+3.多态(动态绑定)
+    ①不同的对象对同一行为作出不同的反应
+    ②多态存在的三个必要条件
+        有继承,或者实现
+        有重写
+        父类的引用指向子类对象 
+     当满足多态的条件时,当调用父类中被重写的方法后,运行时创建的是哪个子类对象,就调用那个子类对象中的该方法
+    在执行期间才判断引用对象的实际类型,称为动态绑定,根据其实际类型执行相应的方法
+4.内部类
+    ①普通类的访问权限修饰符只能是public和default两种
+        而内部类的可以有四种
+b4-11.15
+创建时间：	2017/11/15 星期三 下午 6:43
+
+一.
+1.父类引用指向子类对象,通过该引用只能访问父类中声明的属性和行为,或者在子类中被重写的行为,子类中特有的属性和行为无法访问 
+2.通过 引用. 访问属性或行为的方式
+    ①类型: 决定可以访问的成员
+    ②new 后面的类型: 决定成员的出处
+    ③Father father = new Son();调用方法取决于运行期间是哪个对象调用的它,规则是优先调用自己的方法如果自己没有这个方法,即没有重写这个方法,则调用父类的这个方法
+3.继承关系创建子类对象的过程
+    ① 首先ClassLoader类调用loadClass方法加载类(自动加载继承关系中涉及的所有类),同时自上而下的执行static修饰的内容,同一类中的静态成员变量和静态代码块也是按照代码位置顺序执行的
+    ②此时类加载完毕,可以创建对象了，首先将对象中的实例变量全都被设为默认值，然后调用父类的构造方法,默认自动调用，也可以用super来指定调用。父类构造器和子类构造器一样以相同的顺序经历相同的过程，直到Object。
+    ③然后再自上而下的按照顺序执行普通代码块和普通成员变量的初始化,初始化完之后,再执行构造方法中其余的语句
+二.static
+一般来说，类的代码在第一次使用被加载，即创建某个类的第一个对象时，但是当访问类的静态域（final修饰的除外）或静态方法时也会发生加载，同时构造器其实也是static方法，只是并没有显示的指出来，所以总的来说类的代码加载发生在第一次访问类的静态成员时。
+4.static修饰的属性和代码块在类加载的时候执行,且仅执行一次
+5.static不能修饰局部变量,一是java语法规定,被静态修饰的成员变量和方法随着类的加载而加载,局部变量随着方法的调用而创建
+6.static修饰的内容属于类,被该类的所有对象共享.
+7.静态方法里只能直接访问静态成员,不能直接访问类中的非静态成员,
+8.静态方法中不能使用this super关键字,this super表示的都是对象的引用,静态的内容加载类的时候就执行了,那时还没有对象,所以无法使用
+9.静态方法不能被非静态方法覆盖,static不能修饰构造器
+10.static修饰的方法不能被重写,因为它属于类而不是属于对象
+11.java中静态方法静态绑定,静态方法的选择是编译期就选择好的,是编译期自动根据声明类型帮我们选择的,不依赖于任何对象，所以静态方法不具有多态性
+三.final--表示终态的
+        1.修饰类：该类不能被继承
+        2.修饰方法：
+        ①该方法不能被重写，如今不必为了效率而去将方法修饰为final
+        ②所有的private方法都被隐式的指为final。
+        3.修饰变量：
+        ①变量的值不能改变(就是不能再重新赋值，称为常量)，如果为引用类型，使其引用不可变。可以修饰类变量，实例变量，局部变量
+        ②Java允许空白常量，即声明了但又未给定初始值的常量，但使用前必须初始化，所以要么在声明处赋值要么在每个构造方法中为其赋值
+        ③当将参数列表中的参数用final修饰时，表明在方法内部无法更改参数的值
+            
+    String、System、Math 都是 final 修饰的类
+    final 不能修饰 构造方法
+四.单例模式
+    保证该类在内存中只有一个对象,目的就是为了解决对象过多的问题
+    单例模式编写步骤
+    a)构造方法私有，可以保证 构造方法在类的外面无法访问，避免 被 new
+    b)创建一个私有的、静态的本类对象，用于判断该类是否有对象
+    c)创建一个公有的、静态的返回本类对象的方法，用于向外输出本类的对象
+
+单例模式的两种写法
+ 懒汉式---需要时再去创建对象
+ public class Singleton{
+    private static Singleton single;
+    private Singleton(){}
+    public static Singleton getInstance() {
+        if (single == null) {
+            single = new Singleton();
+        }
+        return single;
+    }
+}
+饿汉式---类一加载,就先创建本类对象
+public class Singleton {
+    private static final Singleton single = new Singleton();
+    private Singleton(){}
+    public static Singleton getInstance() {
+        return single;
+    }
+}
+五,抽象类与抽象方法
+    抽象类:包含抽象方法的类
+    抽象类不能被实例化,必须通过其子类构建
+    抽象类中可以包含抽象方法，也可以不包含
+    包含抽象方法的类 必须是抽象类，抽象类不一定有抽象方法
+    抽象方法:
+    只有方法声明,没有方法实现的方法
+    使用抽象方法的原因:父类中的方法必须在不同的子类中覆盖,就把方法定义为抽象方法
+    
+    
+b3-11.14
+创建时间：	2017/11/22 星期三 下午 10:02
+
+一.
+    每一个类的构造方法中 都会默认在第一行 添加 super() 的代码对父类的空参构造进行调用
+    注意：如果父类中没有空参构造方法，那么子类构造中必须使用super() 显示的指明对父类的构造进行调用
+
+二.this关键字---this表示当前对象,可以调用类的属性,方法和构造器
+    super和this的用法
+    a)super() 和 this()
+    super():表示父类构造方法的调用，只能出现在子类构造方法中的第一句
+    this():表示 对 本类 构造方法的调用，只能出现在本类构造方法中的第一句,而且不能递归调用(自己调用自己)
+    注意：以上用法不能同时使用
+    b)super和this作为对象使用
+    super表示父类的对象，可以调用父类中的属性和行为
+    this 表示本类的对象，可以调用本类中的属性和行为
+    注意：以上用法可以出现在除了 static 修饰的内容以外的位置
+三.访问权限修饰符
+
+四.方法的覆盖(Override)
+    在子类继承父类时发生,对从父类中继承过来的方法进行改造,前提是在子类中也可以被访问到的方法才能被重写
+    重写的规则:
+    方法名相同,
+    返回值类型相同,
+    参数列表相同
+    子类中重写方法的访问权限不能小于父类中被覆盖方法的访问权限
+    子类中重写方法抛出的异常不能大于父类中被覆盖方法抛出的异常
+五.Overload和Override的异同
+    异:
+    1.出现位置的不同:
+    Overload出现在本类中,
+    Override出现在子类中
+    2.涉及的范围不同:
+    Overload既可以重载本类中已有的方法,又可以重载从父类中继承过来的方法.
+    Override只能重写父类中的方法
+    3.返回值
+    Overload:重载和返回值无关
+    Override:重写要求其返回值必须相同
+    4.参数列表:
+    Overload:参数列表必须不同
+    Override:参数列表必须相同
+    5.访问修饰符:
+    Overload:和访问修饰符无关
+    Override:不能小于父类的访问权限
+    6.针对的方法不同:
+    Overload:所有方法都可以进行重载
+    Override:只有被子类继承且可以被访问的方法才可以
+    ps:不能被重写的方法:构造方法,static修饰的方法,final修饰的方法,private修饰的方法以及在不同包中使用default权限修饰符修饰的方法
+六.构造方法是否可以被重写?
+    构造方法不能被继承,所以不能被重写
+    另一种解释:和构造方法的定义有关,在一个类中出现方法名和类名相同,且没有返回值类型的方法才被称之为构造方法
+七.向上转型
+    父类引用指向子类对象(向上转型)，自动把子类转换父类
+    通过父类引用调用的属性和行为，只能是在父类中声明的或被子类重写的方法
+    子类中特有的属性和行为 ，无法访问
+    就是 我们所谓 多态
+八.里氏替换原则:
+    在任何父类出现的地方都可以使用子类替代,反之不行
+    在继承关系下,尽量使用父类类型作为参数使用
+    
+
+b2-11.13
+创建时间：	2017/11/13 星期一 上午 9:43
+
+一.抽象方法---被abstract修饰没有方法体的方法
+    1.为什么使用抽象方法:提醒子类,必须把父类中的某些方法覆盖
+    2.抽象方法必须放在抽象类中
+    3.子类继承父类后,必须实现父类中所有的抽象方法,否则,子类也必须是抽象类
+二.实现多态必然要有重写
+三.父类中没有无参构造方法时,子类的无参构造方法必须显示的调用父类的构造方法
+四.继承关系下:
+    1.子类给父类中的属性赋值: 通过在子类的构造方法中通过super()的形式访问父类的带参构造
+    2.子类调用父类中的方法: 通过super. 的形式
+b1-11.10
+创建时间：	2017/11/10 星期五 上午 9:07
+
+一.构造方法
+    1.构造方法的特征:
+        ①方法名与类名相同
+        ②没有返回值类型
+        ③不能被static,final,abstract,synchronized,native修饰
+    2.构造方法的作用: ①创建对象, ②给对象进行初始化
+
+二.方法重载overload
+    1.方法重载---一个类中出现了两个及以上的名称相同,参数列表不同(个数不同,类型不同,类型的顺序不同)的方法,和返回值 修饰符无关
+    2.构成重载的条件:①方法名称相同
+                              ②方法的参数列表不同
+                              ③在同一个类中
+    3.编译器如何确定使用哪个重载方法:①根据方法名 ②再根据方法的参数类型确定
+    4.又名 静态多态(编译时多态):一个同名的方法可以根据参数不同完成不同的功能.
+b0-11.9
+创建时间：	2017/11/9 星期四 上午 9:30
+
+1.栈stack: 栈的存取速度比堆快,效率高,栈内保存着基本数据类型的局部变量和对象的引用值
+栈分配存储的方法：栈指针若向下移动，则开辟新的内存，若向上移动，则释放那些内存
+堆heap: 堆用于存放所有的对象
+在内存中开辟空间只能通过内存分配操作符new来开辟,凡是有new就必然分配了一个堆内存.
+垃圾回收机制仅作用于堆内存.
+
+成员变量与局部变量
+    ①成员变量:成员变量分为类变量和实例变量,即用static修饰的成员变量和不用static修饰的成员变量
+    ②局部变量:分为形参---方法签名中定义的变量,方法局部变量---定义在方法里的局部变量,代码块局部变量---定义在方法块里的局部变量
+    ③成员变量与局部变量在初始化值上的异同
+        同:都有生命周期
+        异:成员变量无需显示初始化,局部变量除形参外都需要显示的初始化
+    ④成员变量与局部变量的区别:
+            成员变量:
+            a)成员变量定义在类中,在整个类中都可以被访问
+            b)成员变量分为类成员变量和实例成员变量,实例成员变量存在于对象所在的堆内存中
+            c)成员变量都有默认的初始化值
+            d)成员变量的权限修饰符,可以根据需要任选一个
+            局部变量:
+            a)局部变量定义在局部范围内
+            b)局部变量只存在于栈内存中
+            c)作用范围结束,变量空间便自动释放
+            d)局部变量没有默认初始值,除了形参外其它的都必须显示的初始化；可以先声明不进行初始化，但在使用前必须要初始化
+            e)局部变量声明时不指定权限修饰符.
+a9-11.8
+创建时间：	2017/11/8 星期三 下午 8:33
+
+一.选择排序
+
+二.面向对象
+    1.面向对象的分析过程其实就是抽象的过程,从现实中的事物抽取为相应的类,再根据类再程序中创建相应的对象以模拟事物的行为.
+    2.类和对象的关系:
+        ①类是创建对象的模板,对象是类的一个实例
+        ②类是一个抽象的概念,对象是真是的存在
+        ③一个类可以有一个或多个对象,也可以没有对象,但是对象必定属于一个类
+        ④类是模板,定义属性和行为,对象是实例,类中的属性和行为在对象中起作用
+    3.面向对象的特征:
+        ①封装:对外隐藏具体实现细节的行为,把一些功能封装到一个方法中,外面无需关注内部的实现细节,只需使用
+        ②继承:也称为泛化,子类自动拥有父类中属性和行为的能力,要使用继承必须满足is a的关系,父类的父类,也是子类的父类
+        ③多态:一个事物表现为多种形态的能力,java中一个父类可以表现为多种子类的能力,父类的引用 指向子类的对象
+        只有运行后才可以确认方法具体的所属类，称为 动态多态(运行时多态)
+    
+a8-11.7
+创建时间：	2017/11/7 星期二 下午 10:28
+
+1.java中的参数传递为值传递,如果传过去的形参被重新赋值了,那么这个形参就无法影响到外面参数的本身了,因为该形参已经指向其他处了,两者所保存的地址值都不是同一个了.但如果传过去的形参没有被重新复制,那么两者所指向的地址依然是相同的,这时对形参做出改变外面的参数也会受到影响
+
+a7-11.6
+创建时间：	2017/11/6 星期一 下午 6:28
+
+一.数组的逆序存放
+    即将元素对调,第一个和最后一个对调,对调的元素存在如下关系:索引为 i 的元素与索引为 数组长度-1-i 的元素对调,且对调次数等于数组的长度除以2
+    for (int i = 0; i < array.length / 2; i++) {
+        int temp = nums[array.length - 1 - i];
+        nums[array.length - 1 - i] = nums[i];
+        nums[i] = temp;
+    }
+
+二.将一个数组中的重复元素之保留一个其他的替换为0
+每次比较都是从该元素的索引+ 1 开始比较的
+    for (int i = 0; i < array.length; i++) {
+        for (int j = i + 1; j < array.length; j++) {
+            if (array[i] == array[j]) {
+                array[j] = 0;
+            }
+        }
+    }
+    
+a6-11.3
+创建时间：	2017/11/3 星期五 下午 6:50
+
+一.冒泡排序
+排序思想:从数组第一个元素开始,相邻两元素进行比较,按升序或降序的排序需求来,一般为升序,如果前一个元素大于后一个元素,则对其进行位置互换,如此依次比较,就可以将数组中的最大数至于数组尾端了,然后开始第二次大循环,依然从第一个元素开始进行比较,不过不用再和最后一个元素进行比较了,然后进行一轮轮比较后数组中除了上一轮比较出来的最大元素外中的最大元素也至于数组尾端了
+for (int i = 1; i<array.length; i++) {
+    for (int j =0; j < array.length - i; j++) {
+        if (array[j] > array[j+1]) {
+            int temp = array[j+1];
+            array[j+1] = array[j];
+            array[j] = temp;
+        }
+    }
+}
+
+二.二维数组---包含一维数组的一维数组
+    1.动态初始化:
+    ①数组类型[][] 数组名 = new 数据元素类型[行数][列数]
+    ②数组类型[][] 数组名 = new 数据元素类型[行数][],该二维数组中的每个元素---一维数组的值都是默认初始化值null,所以必须给每一行进行初始化后才能使用, 没有行数的动态初始化是非法的
+    2.静态初始化:
+        数组类型[][] 数组名 = new 数组元素类型[][]{{元素..},{元素..},{元素..}}
+        特殊写法情况:int[] x,y[]; x是一维数组,y是二维数组.  
+
+三.操作数组的工具类---Arrays
+    1.equals:比较两个数组是否相等,只有当两个数组拥有相同元素个数,且所有对应元素两两相等时才为true,适用于一维数组,比较二维数组为false,比较二维数组用deepEquals方法.
+    2.fill(指定数组,指定元素):  填充,对指定数组进行填充,如果数组中存在元素,则会被替换为指定元素,填充后数组中都是指定元素.  
+    3.sort(数组):用来对数组进行升序排序.还可以使用sort(数组,开始索引,截止索引)来对数组中的一部分元素进行排序.从开始索引开始,截止到截止索引之前.
+    4.binarySearch():---二分查找法/折半查找法,查询思路为对有序数组折半分为左区和右区,根据其值是否小于左区的右边界或大于右区的左边界来判断处于哪个区间,反复查询.
+对已经排好序-升序的数组寻找元素,返回其索引,如果没有则返回-1
+    5.arraycopy(原数组,起始索引,目标数组,目标数组中的起始索引,复制元素的个数).从源数组中的指定索引开始复制指定长度个数的元素到目标数组,从指定索引开始存储,会进行替换.
+
+四.二分法
+
+
+a5-11.2
+创建时间：	2017/11/2 星期四 上午 11:27
+
+数组
+   一.什么是数组---一些具有相同数据类型的数据集合
+    ①每一个数组中存放的数据类型相同.
+    ②数组是使用一块连续的内存空间存放数据
+    ③数组一旦创建,其长度不能改变.
+
+   二.一维数组的初始化:
+        1.动态初始化:使用new创建数组后其所有元素都已完成了初始化,其值为该数据类型数组的默认值
+        2.静态初始化: 不使用new的初始化方式,在数组声明的同时就在内存中分配好空间并为其赋值初始化.
+        3.数组是引用类型,它的元素相当于类的成员变量,所以当这个数组被new时,其下的每个元素都会被隐式的初始化,如果是引用数据类型的话,默认初始化的值都为null,基本数据类型各有不同,Boolean数据类型的数组默认初始化的值为false;
+    1.数组中的元素可以是基本类型和引用类型
+    2.java中声明一个数组时不能指定其长度
+    3.数组的length属性是一个只读的属性
+a4-11.1
+创建时间：	2017/11/1 星期三 上午 9:24
+
+wihle,for循环的小括号后面不能加分号,否则会导致死循环,while.for循环小括号后加分号表示语句结束,循环就会一直在做空循环
+1.计算注意数据类型,整数取整 
+2.整数的默认数据类型是int没毛病,但强制转换是因为指定的数据类型无法放下该数据才需要强转,如果指定数据类型放得下该数据则不需要强转.
+3. 一个数据,不管是基本类型还是引用类型,只要未被初始化,就无法使用它或调用它的方法
+4.char类型的数字的16进制数(ASCII码)的的二进制的奇偶性与其整数型数字的奇偶性一致.char型的0其值为48;
+a3-10.30
+创建时间：	2017/10/30 星期一 下午 3:02
+
+一.switch语句的规则
+    1.switch(表达式)中表达式的值必须是byte short int  char 枚举 String这几种类型,表达式的值类型准许是String类型只在jdk1.7及以上的版本才被准许.
+    2.case子句中的值必须是常量,且不能重复
+    3.default子句是任选的,可以有也可以没有,当case子句中没一个子句的值与表达式中的值匹配的时候执行default子句
+    4.switch语句从与表达式值匹配的case子句开始执行,执行到遇到break或者switch句尾才停止
+    5.如果判断数值不多,且数据类型符合,建议使用switch,因为其效率稍高.
+二.break语句
+    1.break语句常出现在多层嵌套的语句块中,可以通过标签指明要跳出的是哪一层循环,标签的申明格式为: "标签名:",一般放在循环方法前或者循环体的花括号前面.跳出时只需使用 break 标签名即可跳出标签指定层循环,continue语句也同样适用标签跳出.
+    2.break,continue之后不能有其他语句,因为程序永远不会执行其后的语句,如果有则会报编译异常.
+a2-10.27
+创建时间：	2017/10/27 星期五 上午 9:06
+
+一.原码,补码,反码
+
+  1.计算机以补码的形式保存所有的整数，移位就是对一个整数的补码进行操作
+  java中整数常量默认为int,它所占的空间为4个字节即32位,所以当用二进制定义整数时,第32位作为符号位.当是long型时,则第64位作为符号位
+  一个数的二进制最前面的位表示为符号位.0代表正数,1代表负数
+  一个正数的原码,补码,反码都相同.
+  一个负数的原码为该数的绝对值的原码,不过符号位为1.它的反码也是原码的除符号位取反,补码为反码+1
+  一个负数的补码等于其绝对值的原码全部取反并+1
+
+二.运算符
+    1.算数运算符需注意的问题:一个数取模的结果的正负取决于被模数
+    2.赋值运算符:赋值---只允许常量,变量,表达式给变量赋值,java中支持连续赋值,int a =3 = 4;并不是连续赋值.
+    3.比较运算符:instanceof---检查是否是某类的对象,例如:"abc" instanceof String---true.
+    4.逻辑运算符:逻辑&& 逻辑|| 都会短路,逻辑&&当左面的表达式为false时整个表达式就成了false并且会短路不会再去判断右边的值,逻辑||当左边为true时就短路.
+      按位与和按位或在逻辑运算上与逻辑&&和逻辑||相同,但它不会短路,左边表达式的值并不会影响到右边的值的是否运算
+    5.位运算:只适用于整数和char类型,位运算即直接对二进制进行运算:
+        按位与&:只有两边都为1,运算结果才为1,否则为0
+        按位或|:只有两边都为0,运算结果才为0.否则为1
+        异或^:只有两边不同时才为1.否则为0,异或是为了求异
+        取反~:正负数取反都是依据该数的二进制码(原码)的补码进行各位取反
+        左移<<:  a<<b表示将a的二进制数向左移b位,右边的空位用0补
+        右移>>:  a>>b表示将a的二进制数向右移b位,左边的空位根据该二进制数的最高位(符号位)来补,如果最高位是0,即是正数,则补0,如果最高位是1,即为负数,则补1
+        无符号右移>>>:  无符号位移即不看符号的位移,不管最高位:左边移空的部分用0补
+        所谓的左移右移其实相当于乘以或除以了2的n次方:2<<3:  2乘以2的3次方; 2>>3:  2除以2的3次方
+    逻辑与或 和 按位与或的区别:按位与或既可以参加逻辑运算又可以参加位运算,且不会短路,逻辑与或只能参加逻辑运算且会短路
+    6:三元运算符:表达式1?表达式2:表达式3
+如果表达式2和表达式3的值可以自动转换的话则会自动转换
+三元运算符要求必须返回一个结果,即必须要有个变量来接收
+三.运算符的优先级
+    1:一元运算符>二元运算符>三元运算符
+    2:算数运算符>关系运算符>逻辑运算符>赋值运算符
+    3:括号的优先级别最高
+    4:只有单元运算符,三元运算符,赋值运算符是从右往左运算的
+    
+ps:前置++或--的优先级很高,但是后置++ -- 的优先级最低
+四.
+包名一个点表示为一级,会在工作空间下逐级创建文件夹
+任何double类型除以0其值为无穷大Infinity
+double类型的数据取余只对整数部分取余,取完余之后拼上小数位
+1%2商0余1
+运算符的贪婪法则:当一个运算符遇到一个和自己相同的符号,自动结成一对作为一个符号使用
+运算2的3次方的最快方式:2<<2.
+i=i++的问题:i++是一个表达式，是有返回值的，它的返回值就是i自加前的值,++的优先级大于=
+后++符先将自己的值储存起来,然后再对变量进行++的操作,最后再进行赋值操作
+a1-10.26
+创建时间：	2017/10/26 星期四 下午 6:35
+
+一、标识符---任何可以自己命名的地方(比如类名,方法名,接口名)
+    1.不能以数字开头,但可以在标识符中包含数字
+    2.不能单独使用关键字作为标识符,但可以在标识符中包含关键字
+    3.不能使用除 $ 或 _ 以外的特殊字符
+    4.标识符中不能包含空格
+    标准的书写规范:
+                            帕斯卡Pascal法则:所有单词首字母大写,适用于类名
+                            驼峰camel法则:第一个单词首字母小写,其后每一个单词的首字母大写,适用于变量名与方法名
+                            匈牙利法则:在驼峰法则的基础上要求必须使用数据类型作为后缀
+
+二、数据类型
+    1.八大基本数据类型: byte short int long float double char boolean
+    2.引用类型:类,接口,数组
+    基本数据类型:
+    
+     科学计数法:当一个数值过大时,会自动转换为10的n次方显示,比如 1.78E8表示为 1.78*10^8即1.78乘以10的八次方
+    1.java的整型常量默认为 int 型，声明long型常量须后加‘l’或‘L’
+        八进制整数:0-7,由0开头.
+        十六进制整数:0-9 A-F,必须以0x或0X开头
+        二进制:0和1,以0b或0B开头
+        十进制转 几进制就把数除以 几除到最后把商和余倒起来连着写
+        常用的二进制-十进制转换:
+        传入一个十进制整数n,找到数值表中小于或等于n的最大的一个值,在其值下记1,再用n减去这个值的值m去往下对比寻找,如果下一位数依然小于或等于m,则记1,否则记0,然后继续往下寻找,直到找到末尾
+         ... 512 256 128 64 32 16 8 4 2 1
+    97(10)                    1   1   0  0 0 0 1(2)
+    二进制转十进制则只需将各对应项的乘积相加即可    
+    2.Java 的浮点型常量默认为double型，声明float型常量，须后加‘f’或‘F’
+    3.char型---字符型常量,其占用内存空间为两个字节,即为16位,因此可以使用16进制编码形式表示,也可以说字符型是一个16位的没有符号的整数,字符类型的值是对应字符的编码,是Unicode码,英文字母部分对应的是ASCII码
+        字符型的Unicode区间为: \u0000-\uffff,中文区间为:\u4e00-\u9fa5
+        最小值:0,最大值:65535即2^16-1
+        字符型常量中可以使用\将其后的字符转变成特殊的字符常量
+         
+         可以直接使用Unicode值来表示字符型常量 \u????,其中????代表一个16进制的整数
+         
+         因为每个字符型常量都由对应的Unicode码,所以可以参与运算
+
+三.数据类型转换
+    1.自动类型转换:
+        自动转换原则:boolean不可以转换成其他数据类型
+                            byte,short,char之间不会相互自动转换，他们三者在计算时首先转换为int类型
+        
+        有多种类型的数据混合运算时，系统首先自动将所有数据转换成容量最大的那种数据类型，然后再进行计算
+    2.强制类型转换:发生在将容量大的数据类型转换成容量小的数据类型时,因为小容量的数据类型可能无法完全装下大容量的数据类型,所以强转可能会造成精度损失或溢出.
+    通常String字符串型常量不能直接转换成基本类型,但是可以通过基本类型的包装类型使用parseXxx方法将其解析为基本类型
+    ps:String类属于引用类型,可用null赋值,值null可以赋值给任何一个引用类型的变量,表示这个引用类型变量中保存的内存地址值为空
+四.编码
+    乱码:同一个二进制数字可以被不同的编码编解释成不同的字符,如果用不对应文本的编码方式去解读一个文本文件则会出现乱码.
+    1.ASCII码:一套字符编码,对英语字符与二进制位之间的关系做出了统一规定,ASCII码一共规定了128个字符的编码
+            缺点:不能表示所有的字符,且相同的编码在不同语言的编码中表示的字符不一样.
+    2.Unicode编码:将世界上所有的符号都纳入其中并为其赋予一个独一无二的编码,所以使用Unicode编码没有乱码问题
+            缺点:Unicode是一个字符集,只规定了字符的二进制代码,却没有规定这个二进制代码如何储存,会导致计算机无法区分Unicode和ASCII
+       UTF-8是互联网上使用最广的一种Unicode实现方式,是一种变长的编码方式,可以使用1-6个字节来表示一个符号,根据不同的符号而变化字节长度
+    
+a0-10.25
+创建时间：	2017/10/25 星期三 下午 2:17
+
+一.jdk与jre
+jdk:即Java Development Kit---java开发工具包,包含了java运行环境jre.java开发工具,类库
+jre:Java Runtime Environment---java运行环境,是一个由sun公司开发的软件,是运行java程序所必须的环境的集合,可以让计算机执行java应用程序,其中包含了JVM虚拟机(Java Virtual Machine)以及一些标准的类库
+简单来说:jdk就等于java开发工具+jre(java运行环境),而jre就等于JVM(java虚拟机)+类库(将一些类集中打包放在一起所形成的库).
+所以java中jdk,jre,jvm三者的关系是
+
+二.java技术体系平台
+    1.JAVA SE(Java Standard Edition)又名J2SE  即标准版:是一个适用于开发java桌面级应用以及底层应用的开发平台,包含了java基本开发所需的类库,同时也是JAVA EE的基础平台.
+    2.JAVA EE(Java Enterprise Edition)又名J2EE  企业版:是一个适用于开发企业级应用的平台,主要针对web应用程序开发,包含了JAVA SE中的类,同时还包括了用于开发web应用程序的类:比如jsp,servlet,EJB
+    3.JAVA ME(Java Micro Edition)又名J2ME  微缩版:用于嵌入式系统开发(对于除了电脑之外的所有电子设备上操作系统的开发),包含了Java SE中的部分类,针对于小型电子产品:比如机顶盒,单片机(一种集成电路芯片)
+    4.JAVA CARD  :用于开发一些运行在小内存设备(内存卡)上的java小程序(Applets)
+
+三.java语言特点
+    1.面向对象:
+                两个基本概念:类、对象
+                三大特性:封装 继承 多态
+    2.健壮性:吸收了C/C++语言的优点,去掉了些影响健壮性的部分(比如指针,内存的申请与释放),提供了一个相对安全的内存管理和访问机制
+    3.跨平台性:通过java语言编写的应用程序在不同的系统平台上都可以运行."write once,run anywhere"
+         原理:java程序由JVM来负责运行,所以只要在需要运行java程序的系统平台上安装对应的java虚拟机即可,JVM类似                                     于一个翻译
+
+
+
+
+四.Java的核心机制-虚拟机(Java Virtual Machine)
+    1.是一种虚拟的计算机,具有指令集并使用不同的存储区域,负责执行指令,管理数据、内存、寄存器
+    2.是通过在实际的计算机上进行仿真模拟各种计算机功能实现的
+
+    jvm的生命周期:java虚拟机的主要任务就是装载class字节码文件并解释执行其中的字节码,每一个java程序都由一个jvm虚拟机实例来负责运行,而虚拟机实例的诞生与销毁都是随着java程序的启动与关闭进行的,java虚拟机实例通过调用某个初始类的main方法运行一个程序,这个main方法必须是 public static void的,并且就收一个字符串数组作为参数,任何一个拥有这样的main方法的类都可以作为一个程序运行的起点-java程序始于main方法,main方法是程序初始线程的起点,任何其他的线程都由这个初始线程启动.
+
+ java的核心机制-垃圾回收(Garbage Collection)
+    1.

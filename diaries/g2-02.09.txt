@@ -1,0 +1,27 @@
+创建时间：	2018/2/9 星期五 上午 9:43
+
+一.数据库存储过程-procedure
+1.语法:
+create [or replace] procedure 过程名 (变量名 in 数据类型, 变量名 out 数据类型)
+ //in的变量代表传入参数,out代表输出参数 
+is
+    //变量声明处
+begin
+    //pl_sql块
+end;
+2.使用:
+a)在plsql块中使用
+调用方式:
+存储过程名(传入参数名 => 值, 输出参数名 => 值);
+//当值与参数一 一对应时,可以不显示指明某个值所对应的参数名
+b)java中调用
+//定义sql语句
+String sql = "{call 存储过程名(?,?,?...)}";
+//创建CallableStatement对象
+CallableStatement call = conn.prepareCall(sql);
+//将对应的参数注册为输出参数
+call.registerOutParameter(索引或参数名, 数据类型OracleTypes.常量名);
+//为输入参数占位符赋值
+call.setObject(index, value);
+//通过CallableStatement的get方法获取输出参数
+call.getObject(index);

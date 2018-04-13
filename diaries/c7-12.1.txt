@@ -1,0 +1,43 @@
+创建时间：	2017/12/1 星期五 上午 9:52
+
+一.聚合函数
+    max, min. sum, avg, count
+1.聚合函数会自动忽略null值
+2.max, min, sum, avg找不到数据时会返回null值,而count会返回0
+3.聚合函数不能和普通的列一起使用,要么该列作为分组的条件,要么使用聚合函数包裹起来
+注意的问题
+a)分组函数不能和普通列同时使用
+b)SQL语句中使用group by后,select子句中的列必须是分组的条件或者是被聚合函数包含的
+c)分组函数可以出现在select, having, order by 子句中
+   单行函数可以出现在select, where, order by 子句中
+d)having子句必须跟group by 结合使用,不能单独出现,表示分组后进一步筛选
+e)尽量先使用where进行大范围的筛选,分组后再使用having进行筛选
+f)SQL语句的固定执行顺序
+   FROM-->WHERE-->GROUP BY-->HAVING-->SELECT-->ORDER BY
+所以在select子句中声明的列的别名只能在order by子句中使用
+g)group by 与 order by一起使用时, order by子句中的列要求必须是存在select子句中的列,或者是在order by中使用分组函数包含或者出现在group by中.
+order by的列是选取自select 子句中的, 当与group by一起使用时, select中的列要么出现在group by中要么被分组函数包含, 所以此时order by无法使用未被分组函数包含的不存在select子句中的列
+二.分析函数
+dense_rank()/rank() over(partition by 列 order by 列 [asc] | desc)
+根据partition by后的列进行分组, order by后的列进行排列,并给每个组的每个列一个排名
+dense_rank()会保留order by后的列的值重复的记录
+rank()会去重
+三.top-n
+oracle的分页查询
+a)内层:要进行分页的所有数据
+b)中间:负责给内层查询的数据每一行添加一个rownum作为伪列
+c)外层: 确定要显示的数据区间
+SELECT b.*
+  FROM (
+                SELECT ROWNUM r, a.* FROM (
+                   SELECT * FROM 表名) a
+            ) b
+    WHERE r > begin AND r <= end
+    ---begin = (页数 - 1) * 条数
+         stop = 页数 * 条数
+
+四.多行子查询
+多行子查询必须使用多行运算符
+IN: 等于其中的任意一个值
+ANY: ① > ANY:大于最小值 ② < ANY 小于最大值
+ALL: ① > ALL : 大于最大值  ② < ALL : 小于最小值

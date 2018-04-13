@@ -1,0 +1,75 @@
+创建时间：	2017/12/27 星期三 下午 9:57
+
+一.BOM---浏览器对象模型
+Window对象---浏览器窗口
+1.所有JavaScript的全局对象, 函数以及变量全都会自动成为window对象的成员,全局变量时window对象的属性,全局函数时window对象的方法,document也是window对象的属性
+2.拥有一些对窗口操作的方法:打开open(), 关闭close(),移动moveTo(), 调整大小resizeTo();
+3.widow.screen对象包含有关用户屏幕的信息
+a)availWidth:可用的屏幕宽度
+b)availHeight:可用的屏幕高度
+返回的宽高都会减去界面特性比如窗口任务栏
+4.window.location
+a)作用: 用于获得当前页面的URL地址并重新定向
+b)属性
+①hostname:web页面主机的域名
+②pathname:当前页面的路径和文件名
+③port:web主机的端口
+④protocol:所使用的web协议, http://或https://
+⑤href:当前页面的整个URL,可以设置其属性值为其它的URL跳转至其他页面
+⑥hash:从井号#开始的URL
+⑦search:从问号?开始的URL
+c)方法
+①assign(URL路径):加载新的文档,可返回上一URL
+②reload():重新加载当前文档
+③replace():用新的文档替换当前文档,不可返回上一URL
+5.window.history
+a)history对象包含着用户曾经浏览过的页面URL,从窗口被打开的那一刻开始记录,每个浏览器窗口,标签页,甚至框架(即frame),都有自己的history对象与window对象关联
+b)属性
+①length:浏览器历史列表的URL数量
+c)方法
+①back():加载历史列表中的前一个URL
+②forward():加载历史列表中的下一个URL
+③go():传入一个数字,-n表示加载前面第n个URL, n表示加载后面第n个URL
+6.window.navigator---包含有关浏览器的信息
+7.消息框
+消息框出现后用户需要点击确定或取消按钮才能继续进行操作
+a)警告框:alert("文本"),
+b)确认框:confirm("文本"):如果用户点击确认则返回true,否则返回false
+c)提示框:prompt("文本", "默认值"):如果用户未输入点击确定那么返回的是默认值,否则为输入的值,点击取消则返回null
+8.计时器
+a)创建:setInterval/setTimeout(要调用的函数或代码, 时间间隔单位毫秒ms)
+b)调用函数格式:要调用的函数可以填 "函数名()",一个字符串,也可以直接填函数名
+c)setInterval()和setTimeout()都是在页面载入后间隔一定时间执行代码,但setTimeout()只执行一次
+d)clearInterval()和clearTimeout()用于清除定时器,需要传入定时器的变量名
+二.cookie
+cookie是浏览器提供的一种机制,它将document对象的cookie属性提供给JavaScript, JavaScript可以对其进行操控,cookie是存于用户硬盘上的一个文件,其对应于一个域名,当浏览器再次访问这个域名时,便是这个cookie可用,所以cookie可以用于一个域名下的多个网页,当不能跨域名使用.同时cookie是与浏览器相关的,不同浏览器访问同一页面所保存的cookie是独立的,不能相互访问
+1.设置cookie
+a)每个cookie都是一个名/值对,可以把这样的一个字符串赋给document.cookie,例如document.cookie = "名=值";
+b)cookie的名或值不能使用分号,逗号,等号以及空格,但可以使用escape()函数对其进行编码,空格会被编码为 "20%",编码后的值被取出来后需要使用unescape()进行解码获取原来的值
+c)对document.cookie的多次赋值并不会使其丢失原来的值,它和一般属性不一样,每次的赋值都是添加一个cookie
+d)改变cookie的值只需给cookie重新赋值, document.cookie="cookie名=新值";
+2.获取cookie
+a)cookie的值通过document.cookie直接获取,这将返回一个字符串,其内容为以逗号和空格分隔开的多个名/值对,这些名/值对为该域名下所有的cookie,
+b)由于只能一次取出所有的cookie,取出某一个cookie的值需要先对得到的cookie值使用split()函数分割, 根据 "; "来分割,再遍历分割后得到的数组,再对其每一个数组根据 "="进行分割,得到的数组长度为2, 下标0的值为cookie的name, 下标1的值为cookie的value,这时拿要寻找的cookie的name跟下标0的值进行比较,相同则下标2的值即为要找的cookie的value
+var key = "key";
+var cookies = document.cookie.split("; ");
+for (var i = 0; i < cookies.length; i++) {
+    var cookieMap = cookies[i].split("=");
+    if (key == cookieMap[0]) {
+        key = cookieMap[1];
+        break;
+    }
+}
+3.设置cookie终止日期
+所有的cookie都是单会话cookie,随着浏览器的关闭而消失,这些cookie仅存在于内存中,持久化需要设置其终止日期
+a)设置方式: document.cookie="名=值; expires=UTC日期";
+设置的终止日期需是UTC日期,可以调用Date对象的toUTCString()函数取得
+b)其它应用:可以设置某个cookie的过期时间设为一个过去的时间使其被删除
+4.指定可以访问cookie的路径
+默认情况下,如果某个页面创建了一个cookie,那么该页面所在的其他页面以及其下的子目录都可以访问这个cookie,可以通过对path参数的设置来控制可访问cookie的路径
+document.cooke = "name=value; path=可访问目录",
+如果要是cookie在整个网站可用,可以把可访问目录设为"/"
+5.指定可访问的主机名
+主机名是指同一个域下的不同主机,默认情况下,一个主机创建的cookie不能被另一主机访问
+可以通过设置domain参数使其它主机能够访问
+如果把domain参数设为 .google.com 那么google.com下的所有主机都可以访问该主机的cookie

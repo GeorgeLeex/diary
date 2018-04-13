@@ -1,0 +1,90 @@
+创建时间：	2018/1/21 星期日 下午 12:46
+
+一.ajax
+1.ajax指的是异步JavaScript及XML(Asynchronous JavaScript And XML),是一种页面无刷新的技术,在不刷新整个页面的情况下更新局部内容,是一种编程模式
+2.实现步骤
+a)获取XMLHttpRequest对象
+var xmlHttp;
+//判断window对象中是否有ActiveXObject属性的值,如果有则为低版本IE浏览器
+if (window.ActiveXObject) {
+    xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+} else {
+    xmlHttp = new XMLHttpRequest();
+}
+b)设置请求资源及处理响应结果的函数
+//提交方式为GET或POST 
+xmlHttp.open("提交方式", url, 是否异步);
+//设置xmlHttp请求状态码改变时的处理函数
+xmlHttp.onreadystatechange=function () {
+    //判断服务器状态
+    if (xmlHttp.readState == 4 &&            xmlHttp.status== 200) {
+        //获取响应内容,responseText为响应的文本,responsXML为响应的XML数据
+        var result = xmlHttp.responseText
+    }
+}
+//发送请求,如果为POST提交需要提交数据可以在send函数中传入进去,GET提交不需要,传入null即可
+xmlHttp.send();
+二.会话跟踪技术
+为了解决HTTP协议无状态性所导致的无法记录信息的问题
+1.URL重写:把一些信息以地址栏传参的形式在页面和控制器之间传递
+2.隐藏域:把一些信息写入到type为hidden的input标签中
+3.Cookie
+a)是服务器写在客户端中的文本数据,以键值对的形式存储
+b)一个域名通常只能写入一个cookie文件,其中可以写入多个cookie键值对
+c)Cookie的方法
+①.构造方法 Cookie(String key, String value), 其key和value不可以包含 [] () = , " / ? @ : ;这些字符, 且其key不能重复
+② getName( )获取cookie名,getValue( )获取cookie值, 一个cookie类似于一个键值对
+②.setMaxAge(int time);设置cookie对象的生命时长,如果不设置则默认为临时cookie,即浏览器关闭就消失.
+i.  time >0 ,写入硬盘中,单位为秒
+ii.  time = -1 ,表示为临时的
+iii. time = 0;表示cookie失效,使浏览器删除cookie
+d).向客户端发送cookie
+调用响应对象的addCookie(Cookie c)方法将Cookie放入响应报头
+e).从客户端读取cookie
+请求对象的getCookies()方法获取到一个Cookie数组,并通过cookie对象的getName()和getValue()获取cookie的key和value, 不管是否手动写入了cookie,总能获取一个key为"JSESSIONID", value为session的id值的临时cookie
+f).每一个浏览器都各自的cookie存放位置
+4.会话对象session
+a)作用
+保持同一个客户多次请求之间的联系,一个HttpSession对象唯一的属于一个用户,通过一客户的多次连接共享供一个会话对象
+b)当客户第一次请求时容器会生成唯一的会话ID---JSESSIONID,并以cookie的形式响应给客户端,之后客户端每次请求都发回这个ID,容器通过该ID找到对应的会话对象与请求关联
+c)保持会话的方法
+①给每个会话保持一个唯一的会话ID,并使用cookie或者URL重写的方式,
+②URL重写:是一个将传入web的请求截取并自动将请求重定向到其它URL的过程，response.encodeUrl()
+d)session的获取
+①HttpServletRequest接口中的getSession()方法,获取服务器创建的session,如果没有获取到则服务器自动创建
+②getSession(boolean);为true则和getSession()一致,如果为false那么会在没有获取到服务器创建的session时返回null.
+e)常用方法
+①setAttribute(String key, Object value);
+②Object getAttribute(String key);
+③setMaxInactiveInternal(int time);设置session的最大有效期,单位为秒,默认为1800秒,如果为负数或为0永不过期.
+④invalidate():使当前session失效,session中存放的数据全部丢失
+⑤String getId():返回HttpSession对象的JSESSIONID
+f)使session中数据失效的方法
+①HttpSession对象的invalidate()
+②设置有效期为1秒
+③使用removeAttribute(String key)方法移除session中的指定数据
+④关闭浏览器,存储JSESSIONID的cookie消失,服务器端的session将与客户端失去联系,等到超时后便会被回收,所以当浏览器关闭时,session也就相当于结束了
+5.session和cookie的区别以及关系
+a)关系:Cookie中存放着session对象的id
+b)区别:
+①存放的位置
+session存放于服务器, cookie存放在客户端的硬盘或者浏览器中
+②存放的数据不同
+session可以存放任意类型的数据,cookie只能存放字符串类型的数据
+③安全性
+session由于存放于服务器中所以较为安全,cookie存在于客户端,不安全
+④有效期
+session默认为30分钟,且当浏览器关闭时结束. cookie默认为-1表示临时的,浏览器关闭时失效,但可以通过设置有效期使其未达到失效期之前都可以使用
+⑤产生的方式不同
+session是在浏览器访问服务器时由服务器产生的,只能获取使用
+cookie可以自己创建并通过response对象添加到客户端
+三.数据共享方式的比较
+1.生命周期
+application > session >request > pageContext
+2.线程安全性
+application和session范围里的数据都是多线程共享的,request和pageContext范围中的数据是线程安全的
+3.
+①HttpServletRequest对象存储的信息只能在一个请求过程中共享,生命短暂
+②HttpSession对象生命周期比request对象长,用于跟踪客户端的状态
+③ServletContext对象与整个web应用相关,一般用于存放系统相关的信息,该对象仅在web服务器关闭或web应用被卸载时才会被销毁
+四.通过href, src的方式进行的资源访问无法访问到WEB-INF下的资源,所以需要通过访问servlet的形式然后转发到对应的资源

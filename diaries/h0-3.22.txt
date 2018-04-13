@@ -1,0 +1,16 @@
+创建时间：	2018/3/21 星期三 下午 8:32
+
+一.类加载器ClassLoader
+1.将类装入jvm的步骤
+①装载: 寻找并加载Class字节码文件
+②链接:a)校验: 检查Class字节码文件数据的正确性
+           b):准备: 给类的静态变量分配存储空间
+           c):解析:将符号引用转换为直接引用,将那种通过名字的引用转换成内存地址
+③初始化:对类的静态变量,静态代码块进行初始化.
+2.jvm运行时期会产生三个加载器:根加载器BootstrapClassLoader, ExtClassLoader, AppClassLoader,根加载器负责装载jre的核心类库, ExtClassLoader负责加载jre的扩展目录ext下的jar包, AppClassLoader负责加载类路径下的jar包,三个加载器中ExtClassLoader和AppClassLoader是ClassLoader的子类, 这三个加载器存在着父子关系,根加载器是ExtClassLoader的父加载器,ExtClassLoader又是AppClassLoader的父加载器
+3.jvm加载类时使用全盘负责委托机制, 全盘负责: 是指当一个类加载器装载类时,除非指定使用其它的类加载器,否则该类所依赖及引用的类也由该类加载器加载
+委托机制: 是指首先委托父加载器去寻找目标类,只有找不到时才会从自己的类路径中查找并装载
+git remote add origin https://github.com/GeorgeLeex/crm2.git
+创建时间：	2018/4/6 星期五 下午 5:02
+
+git remote add origin https://github.com/GeorgeLeex/crm2.git

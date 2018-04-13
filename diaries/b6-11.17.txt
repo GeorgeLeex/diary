@@ -1,0 +1,73 @@
+创建时间：	2017/11/20 星期一 上午 9:33
+
+一.equals方法与hashcode
+1.equals方法:默认,即没有被重写的情况下,比较的是两个对象的内存地址
+2.hashCode方法:返回此对象的哈希码值---根据对象的内存地址进行换算得到的值,而hashCode方法又可以重写,就意味着该方法所返回的哈希码值不一定是内存地址所转换的值
+3.通常情况下不同的对象,拥有不同的hashCode码,不过具有相同的hashCode码不一定是同一个对象
+注意:如果两个对象的equals比较为true,则这两个对象的hashCode码必须相同
+        如果两个对象的hashCode码相同,这两个对象也不一定相同,因为hashCode方法可以重写
+
+二.equals与==
+1.默认的equals方法是使用==进行比较的,即比较内存地址
+2.equals只能用于引用类型的比较中,而==既可以用于比较引用类型又可以用于比较基本类型
+3.equals方法通常会被覆盖,用于比较内存的值是否相同,而==不管怎样都是比较内存地址
+
+三.基本类型与String类型之间的相互转换
+1.基本类型--->String
+    使用String的valueOf方法,
+    valueOf(基本类型)
+2.String--->基本类型
+    使用各基本类型的包装类型.parse方法
+    包装类型.parseXxx(字符串);
+3.自动装箱与自动拆箱---自动将数据的基本类型与包装类型转换的机制
+    注意:自动装箱与自动拆箱机制是在jdk1.5以后出现的
+
+四.String字符串
+1.String是引用类型,不是基本类型,但是可以像基本类型一样操作
+2.String表示一个字符序列(charSequence),对字符串的任何修改都会产生一个新的字符串
+3.String字符串的不变性:String字符串一旦被赋值,其内容不能改变,对字符串的任何修改都会产生一个新的字符串
+4.String是个final修饰的类,不能被继承
+
+五.正则表达式
+String常用正则表达式(regx)的方法有:replace,repalceFirst,replaceAll,split
+    ①[ ]: 表示其中的任意一个字符
+    ②{ }: 表示其紧挨的表达式连续出现的次数
+        {n}: 表示正好n次
+        {n.m}: 表示最少n次, 最多m次
+        {n, }:最少n次,没有上限
+
+六.可变字符串---StringBuffer与StringBuilder
+1.String与StringBuffer的区别:
+a)String一旦初始化,其内容不能改变,如果改变就会产生一个新的字符串
+   StringBuffer是可变字符串,任何修改都会影响原始数据
+b)String每次操作都会产生新的对象,消耗内存较多
+   StringBuffer是在同一块内存中操作字符串
+c)String既可以直接赋值创建,又可以通过new创建
+   StringBuffer只能通过new来创建
+2.StringBuffer与StringBuilder的异同
+异:a)StringBuffer在jdk1.0就有了,而StringBuilder是在jdk1.5后添加的
+    b)StringBuffer是线程安全的,StringBuilder是线程不安全的
+    c)StringBuilder的效率比StringBuffer要高.
+
+七.其他类
+1.Math类
+特点:
+    a)final修饰
+    b)构造方法私有化,且无获取实例的公开方法
+    c)所有属性和方法都是static修饰的
+常用方法:
+    a)radom():获取随机数
+    b)round():四舍五入,只保留整数
+    c)ceil():获取大于或等于当前数字的最小整数,以double格式显示
+    d)floor():获取小于当前数字的最大整数,以double格式显示
+2.日期类
+    ①Calendar
+    通过getInstance()方法获得实例
+    通过Calendar对象的get(Calendar.日期部分格式)获取年或月或日,不过通过该格式获取的月份比正确的月份要少1
+    日期部分格式都是常量,年为YEAR,获取四位数的年,日为DAY_OF_WEEK,周日为1,周六为7
+    ②Date
+    getTime(): 获取1970-01-01 00:00:00到今天相差的毫秒数
+    getYear(): 获取1900年至今年过了多少年
+    getDay(): 获取今天是一周中的星期几.周一为1,周日为7
+3.异常
+    illegalAccessException:对类的请求被拒绝

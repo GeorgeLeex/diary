@@ -1,0 +1,53 @@
+创建时间：	2018/1/19 星期五 下午 9:54
+
+一.转发与重定向
+转发:在服务器端把请求转个下一个资源
+重定向:使客户端重新发起请求一个资源,请求的方法为get方法
+1.转发和重定向的区别
+a)完成的方式不同
+转发通过request.getRequestDispathcer("url").forward(request, response)方法实现
+重定向通过response.sendRedirect("url")方法实现
+b)发生的位置不同
+转发发生在服务器
+重定向在客户端完成
+c)发送请求和响应的次数
+转发只发送一次请求,并响应一次
+重定向发送了两次请求并响应了两次
+d)请求中的内容是否保留
+转发的请求中的内容可以继续保存,因为转发的同时把请求对象传递了过去
+重定的请求中的内容不再继续保存,因为是客户端对服务器又发起了一次新的请求
+e)地址栏是否改变
+转发地址栏不变
+重定向地址栏变为重定向资源的路径
+f)可访问资源的不同
+转发只能访问本项目内部的资源,不过可以访问WEB-INF下的资源
+重定向既可以访问项目内部中除了WEB-INF下的资源,也可以访问项目以外的资源
+二.过滤器
+1.作用:
+对Servlet容器的请求和响应对象进行检查和修改,可以在Servlet被调用前处理请求对象,以及在调用完FilterChain对象的doFilter方法后处理响应对象
+2.创建:
+实现Filter接口,在doFilter(ServletRequest request, ServletResponse response, FilterChain chain)方法里进行处理,ServletRequest, ServletResponse分别是HttpServletRequest和HTTPServletResponse的父接口
+3.访问的配置
+a)web2.5需要在web.xml文件中配置,并要求filter必须配置在所有servlet前面,配置方式与servlet的配置方式类似
+b)web3.0需要在类上添加注解WebFilter("拦截的路径"), "/*"表示对服务器所有资源的请求都会经过过滤器, ".suffix"表示对文件为指定后缀名的请求过滤, "/directory/*"表示对指定目录下内容的请求过滤
+4.过滤器的生命周期与servlet类似, 加载类-->实例化-->初始化-->过滤请求-->销毁
+5.过滤器默认情况下处理客户端的请求,而由于转发是在服务器端完成的,所以转发的请求不会经过过滤器
+6.过滤器链
+由两个及以上的针对同一资源路径过滤的过滤器构成,多个过滤器按顺序执行,web2.5配置在web.xml文件会根据在其中配置的顺序执行,web3.0使用注解形式的会根据过滤器的类名排序执行,如果一个资源被一个小范围的过滤器以及一个大范围的过滤器同时过滤,那么会先执行小范围的过滤器.内层过滤器总是被包含在外层过滤器里,只有执行完了内层过滤器的整个操作后才会执行外层过滤器FilterChain对象的doFilter方法后面的代码
+7.Servlet的分类
+所谓的Servlet就是运行在服务器中的处理客户端请求并响应的java类
+a)标准的Servlet
+b)过滤器Filter
+c)监听器Listener 
+①监听器负责监视request, session, application对象的创建与销毁以及其中数据的变化
+②监听对象的创建与销毁
+i. request对象:需要实现ServletRequestListener接口并实现requestInitialized()方法以及requestDestroyed()方法
+ii. session对象: 实现HttpSessionListener接口并实现sessionCreated()方法以及sessionDestroyed()方法
+iii. application对象: 实现ServletContextListener接口并实现contextInitialized()方法以及contextDestroyed()方法
+③监听属性值变化的监听器分别需要实现ServletRequestAttributeListener,HttpSessionAttributeListener, ServletContextListener接口并实现属性添加,属性删除,属性替换这三个方法---attributeAdded(),attributeRemoved(),attributeReplaced()
+④session域中的对象可以有多种状态, 绑定状态---session.setAttribute("key", Object)以及解绑状态---session.removeAttribute("key")
+有两个特殊的监听器接口HttpSessionBindingListener和HttpSessionActivationListener接口,用于帮助javabean对象了解自己在session中的状态, 是给Javabean的类实现这些接口,并不需要在web.xml文件中注册
+i.HttpSessionBindingListener
+实现该接口后实现valueBound()方法以及valueUnbound()方法使对象了解自己在session域中绑定与解绑的状态
+ii.HttpSessionActivationListener
+实现该接口的类实现sessionWillPassivate()方法以及sessionDidActive()方法可以感知到自己将要和session对象一起序列化以及反序列化的事件

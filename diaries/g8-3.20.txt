@@ -1,0 +1,17 @@
+创建时间：	2018/3/20 星期二 上午 8:44
+
+一.xml文档中的xmlns(XML NameSpace):对XML文档中标签的命名制定的规范,为解决XML文档的冲突问题
+1.当标签中定义了xmlns, xmlns:prefix 这种属性时,xml文档中的标签名,属性名等都要符合xmlns右边的uri中指定的规范
+2.xmlns表示当前xml文档默认的命名空间,使用其中定义的标签名,属性名等定义时不需要添加前缀,
+  而xmlns:prefix这种带了前缀的命名空间,使用其中的定义时需要添加指定的前缀,格式: prefix:xxx
+3.对xml文档的定义实际上是由xsd(XML Schema Definition)文件来定义的, 通常某一命名空间下有多个xsd文件, 所以需要指定它究竟使用哪个xsd文件,
+这时可以引入另一个命名空间, 通常前缀设为 xsi(即为XML Schema Instance的意思), xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+它其中有一个属性schemaLocation用以指定某一命名空间使用哪一个xsd文件, 格式: xsi:schemaLocation="命名空间uri xsd文件uri", 命名空间uri与xsd文件uri之间使用空格分隔, xsd文件通常就在命名空间uri的下一级目录, 这样就可以指定命名空间使用哪个xsd文件了
+
+二.
+1.关于String的replace, String有重载的两个replace方法, 
+replace(char oldChar, char newChar)   
+replace(CharSequence target, CharSequence replacement)
+两个方法都会会返回一个新的字符串,即为替换之后的字符串
+ p.s. CharSequence:一个顶级的接口, 其已知实现类有String,StringBuffer,StringBuilder
+2.HashMap有个方法叫做values, 返回一个包含所有value的Collection集合

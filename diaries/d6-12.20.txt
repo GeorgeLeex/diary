@@ -1,0 +1,15 @@
+创建时间：	2017/12/20 星期三 下午 2:31
+
+1.form表单中的单选框radio根据其name值来区分是否为一组,一组单选框下的每个单选框的name值都是相同的,且同一时间只能有一个被选中
+2.下拉框select可以一次选择多个,需要在select标签中添加multiple属性并设置为true或multiple, select标签的size属性为显示的option个数
+3.input标签中的属性
+①size: 表单元素的初始宽度,当type为text或password时,大小以字符为单位, 为其他类型时, 以像素为单位
+②maxlength: type为text或password时, 输入的最大字符数
+③将一个表单元素设置为disabled或readonly都能使其无法修改,但设置为disabled的元素的值无法正常提交到后台
+4.表单的域和域标题
+fieldset标签为一个域, 其中的legend为域标题, legend标签对中的内容会作为域的标题显示在域边框的左上边框的中间
+5.label标签的标注
+为表单元素定义标注,当点击label元素中文字时,将焦点转到对应的表单元素上.
+通过在label标签中添加for属性实现, 其中for属性的值为要跳转的表单元素的id
+6.form表单可以可以添加onsubmit="return 函数()"来使其提交前调用函数并根据其返回值来决定是否真正提交,但如果是在js中调用form表单元素的submit()函数则不会触发onsubmit事件
+7.Document对象其中包含了 forms[], images[], links[]等集合,这些集合中包含了页面中所有form对象, image对象, area和link对象, 可以通过document.forms[索引或form对象的id] 访问指定form对象, 访问所有form对象中的所有元素都可以通过 form对象名.子元素id 访问, 如果有多个id相同的子元素,则获取到一个数组

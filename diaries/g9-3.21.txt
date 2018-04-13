@@ -1,0 +1,105 @@
+创建时间：	2018/3/21 星期三 上午 9:39
+
+一.spring
+1.IoC容器:
+①BeanFactory(接口):轻量级的IOC容器,管理bean的生命周期及依赖关系,采用延迟加载bean, 在第一次使用getBean()时才会初始化Bean,其主要实现类为XmlBeanFactory,当父类引用指向该子类时才是延迟加载bean,不过现已过时
+②ApplicationContext(接口):BeanFactory的子接口,对其功能进行了扩展,在自身被实例化时一次性完成所有bean的初始化,其主要实现类:ClassPathXmlApplicationContext(寻找类路径下的配置文件), FileSystemXmlApplicationContext(寻找物理路径上的配置文件), spring的web模块是建立在该模块上的
+③WebApplicationContext: 通过WebApplicationContextUtils.getWebApplicationContext(ServletContext sc)获取,
+需要在web.xml文件中配置监听容器启动的监听器ContextLoaderListener以及初始化参数param-name:location, param-value: spring配置文件路径
+区别: BeanFactory启动时不会校验xml文件的正确性, 获取bean装配时错误会产生异常
+            ApplicationContext在启动时会校验xml文件,所以不会产生bean装配的错误
+            其实主要还是由实际指向的子类决定,XmlBeanFactory的一系列问题
+2.IoC容器管理的bean的生命周期
+①实例化bean
+②为bean进行注入初始化
+③基于spring对bean的使用
+④IoC容器对bean进行销毁
+3.实例化bean的方式
+①通过构造器实例化
+②通过静态工厂的方法进行实例化
+<bean class="工厂全类名" factory-method="创建实例的方法"/>
+③通过实例工厂的方法进行实例化
+a）配置工厂bean  <bean id="" class="工厂全类名"/>
+b) 配置bean实例化所需的工厂bean及方法
+    <bean id="" factory-bean="工厂bean的id" factory-method="工厂的bean方法"
+3.bean的命名和定义
+spring中bean的定义由BeanDefinition对象表示
+①id，name， class
+②lazy-init：默认为false，设置为true时只有第一次获取时才会加载， 可以在<beans>节点设置属性default-lazy-init为true使其所有的bean都采用延迟加载
+③scope：
+a）singleton：单例，所有的bean默认为singleton
+b）prototype：多例，每次获取都是一个新的对象
+c）request：每个request请求都为其创建一个单例实例
+d）session：没个session会话中为其创建一个单例实例
+d）globalSession： 全局session， session共享？    
+④depends-on
+bean的依赖：一个bean对另一个bean的依赖可以在xml文件中通过 ref属性或元素来引用，被依赖bean将在依赖bean之前被适当的初始化，depends-on可以在该bean初始化之前显示的指定强制让哪些被依赖bean进行初始化，可以同时指定多个， bean之间的名字使用逗号，空格或分号间隔
+4.IoC容器注入的方式
+①构造方法注入
+②属性注入，通过属性的set方法注入
+③注解的方式注入
+④接口注入，spring不支持
+5.基于注解方式的注入
+① @Autowired
+只按照byType按照类型注入，默认情况下要求被依赖对象必须存在，设置该注解的required属性为false即为允许null值，如果想按照名称byName注入的话，需要与@Qualifier注解配合使用
+②@Resource
+有两个关键的属性 name和type。默认都不指定的情况下为byName查找，如果byName没有找到，则回退到byType查找；指定了name属性则byName；指定了type则byType，如果同时指定了name和type，则会往容器中寻找唯一匹配的bean； 找不到都会抛出异常
+③二者的共同点：都可以使用在字段或set方法上，如果使用在字段上了，那么不再需要写setter方法了
+6.依赖注入的三种配置方式
+①xml文件：类型不安全，所配置的bean的对象可能会因为失误配置成其他类而导致问题，自由度低，但修改配置不需要重新编译且不会侵入代码
+②注解：
+a)实现方式：i）在需要实例化的组件类上添加@Component
+                    ii）告诉spring哪些包是需要扫描并自动装配的，创建一个配置类，在类上添加@Configuration和@ComponentScan注解，并为@Component的basePackageClasses的属性赋值，其值为一个class数组，表明spring会扫描这些类所在的包，然后就可以在需要的地方使用@Autowired或@Resource注入了。p.s. 测试时需要将测试类上的@ContextConfiguration注解的locations属性替换为classes，其值为配置类的class
+b)优缺点：方便简洁，类型安全，但会侵入代码，且需要重新编译class文件，自由度低
+③Java Config：
+a)实现方式：只需要创建一个配置类，在类上使用@Configuration注解，然后在配置类编写返回要注入的对象的方法，并给这些方法加上@Bean注解，告诉spring为返回的对象创建实例，返回何种对象由自己指定，如果该类依赖某个对象，可以在方法的入参中添入需要的对象参数，若有其它注解了@Bean的方法返回值为其所需要的类型，则会自动注入到该方法的入参处，然后可以由此构建自己需要的对象了。
+b)优缺点：类型安全，不需要重新编译，不会入侵代码且自由度高
+④三种方式的选择：xml配置优势在于修改后不需要重新编译，适用于那些经常需要切换实现类的对象；注解简洁方便，为首选；当需要注入的对象不是自己维护的第三方jar包中的类时，这时需要用到Java Config。
+二.AOP
+1.基于XML配置的AOP
+①创建并在IoC容器中注册切面类
+配置如下
+<aop:config>
+    //定义切面
+    <aop:aspect id="" ref="切面bean的id"/>
+    //定义切点
+    <aop:pointcut id="" expresion="拦截表达式"/>
+    //定义通知，共五种通知: before， after， after-throwing， after-returning， around
+    <aop:before pointcut-ref="切点名" method="通知方法名"/>
+    //如果是返回值通知，则返回值通知的方法可以在参数列表中可以添加一个参数代表返回值，然后xml的配置中需要为其元素添加returning属性，值为参数名，当符合切点中连接条件的方法被调用时可以在返回值通知中获取该值，但是当返回值通知方法的参数列表中参数类型与被调用方法返回值类型不兼容时不会触发该通知， 如果返回值通知方法参数列表的参数类型为Object，那么方法返回值为void的方法被调用也会触发该通知，得到null。
+    //异常通知亦如此，在异常通知方法参数列表中添加一个参数代表异常类型，其xml文件配置相应的throwing属性，值为参数名，当符合条件的被代理类的方法执行时，只有其抛出异常类型与异常通知参数列表中代表异常的参数的类型兼容时才会触发
+</aop:config>
+②通知方法的参数列表中可以添加一个类型org.aspectj.lang.JoinPoint的参数，通过该参数可以获取被代理类的信息
+a）getSignature()：获取被代理类当前执行方法的方法签名
+b）getTarget(): 获取当前被代理类
+c）getArgs(): 返回一个包含被代理类当前执行方法的实参的数组
+2.基于注解的AOP
+前置要求：
+①开启对AspectJ的支持，两种方式
+    a)在xml文件中配置<aop:aspectj-autuoproxy/>并在切面类上添加@Aspect注解
+    b)在切面类上添加@Configuration和@EnableAspectJAutoProxy注解
+②为切面类和被代理类在容器中进行注册
+例子：切面类的配置
+@Aspect  //声明切面
+public class MyAspect{
+    //定义切点PointCut,设置对哪些方法进行拦截
+    @PointCut(vale = "execution(。。。)")
+    public void pointCut(){}  //该方法代表着一个切点，不能有返回值和参数，其方法名为该切点的标志名，为其后通知引用
+
+    //设定通知,通知有五种：Before，After，AfterThrowing，AfterReturning，Around
+    @Before(value = "pointCut()")  //前置通知,绑定切点
+    public void adviceBefore(){...}
+    //返回值通知需要给注解添加returning属性，其值为返回通知方法参数列表的属性名
+    @AfterReturning(pointcut="切点名", returning = "返回通知方法参数列表的形参名")
+    //异常通知 @AfterThrowing(pointcut="", throwing="")
+}
+3.切点标志符
+①execution：匹配符合要求的连接点(被代理类的方法)，最基本的标志符
+②within：匹配指定包下所有的连接，比如within(xyz.northsky.*),匹配xyz.nortysky包下的所有类的所有方法,within(接口名+)：匹配实现了指定接口的所有实现类的所有方法
+③bean：匹配名字为指定值的bean的所有方法
+④@annotation：匹配由指定注解标注的方法
+⑤args：匹配参数列表满足要求的方法，需要的是参数类型，e.g.  args(int, java.util.Map, ..)
+e.g. @After(value = "切点名() && args(name, age)")   //可以引用标注方法的参数列表中的参数名，但此时要求其与参数列表完全一致
+       public void afterAdvice(String name, int age) {...}
+       那么此时只有符合切点连接条件且参数列表为 String类型，int类型 的方法被调用才会触发该通知
+p.s. 切点标志符之间可以使用 || 或 && 组合使用，当通知注解中不指明引用的切点时可以在其value属性中进行拦截条件配置

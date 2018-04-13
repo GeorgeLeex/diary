@@ -1,0 +1,13 @@
+创建时间：	2018/4/9 星期一 下午 5:32
+
+一.自定义转换器
+1.创建自定义转换器类并实现Converter<S, T>接口，泛型S为原类型，T为目标类型，需要在实现接口时指定泛型实际类型；实现其中的convert方法
+2.在IoC容器中注册ConversionServiceFactoryBean，并设置converts属性，其值为Set类型，所以需要在<set>标签中添加自定义转换器bean，指定其class属性
+3.在<mvc:annotation-driven>标签中设定conversion-service属性，其值为factorybean的id，<mvc:annotation-driven conversion-service="factorybean的id"/>
+此时就可以将页面前端数据按自定义转换器的实现转换数据
+二.关于<mvc:annotation-driven>
+1.添加给标签会自动注册RequestMappingHandlerMapping、RequestMappingHandlerAdapter与ExceptionHandlerExceptionResolver这三个bean，并提供conversion-service支持对表单数据的自定义转化，以及@NumberFormat，@DateTimeFormat注解对数据的格式化，以及使用@Valid注解对bean的验证，以及@RequestBody和@ResponseBody注解使用的支持
+2.添加<mvc:default-servlet-handler>注解可以解决DispatcherServlet对静态资源的拦截，但只添加该标签时会没有请求映射适配器，导致无法解析请求映射，所以同时需要添加<mvc:annotation-driven>标签来提供RequestMappingHandlerAdapter
+三.@InitBinder注解
+1.被@InitBinder注解标注的方法可以对WebDataBinder对象进行初始化，可以设定数据的绑定规则
+2.@InitBinder标注的方法不能有返回值，且方法的参数通常是WebDataBinder，比如调用该对象的setDisallowedFields(String...)设定某些字段不进行绑定

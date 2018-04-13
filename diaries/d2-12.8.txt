@@ -1,0 +1,36 @@
+创建时间：	2017/12/8 星期五 上午 9:38
+
+一.jdbc
+jdbc(Java Database Connectivity): java数据库连接技术,提供统一的api对关系型数据库进行访问
+1.常用类和接口
+a)类
+DriverManager: 负责使用数据库驱动获取数据库的连接,需要提供数据库的url,用户名和密码
+b)接口
+①Connection: 连接,一次会话(session),代表着程序与数据之间的连接,通过使用DriverManager的静态方法getConnection()方法获取
+②Statement: 负责sql语句的传递,通过Connection的createStatement()获取,用于执行静态的sql语句,即把所有内容写在sql语句中的语句
+方法:
+i)boolean execute(String sql): 可以执行任意sql,如果返回true则表示有查询结果,可以通过getResultSet()获取查询到的结果集,如果返回false,则表示执行的是修改操作,可以通过getUpdateCount()获取影响的行数
+ii)int executeUpdate(String sql): 执行DML语句,返回所影响的行数,返回值大于0表示操作成功, 等于0操作失败
+iii)ResultSet executeQuery(String sql): 执行DQL语句返回查询结果集
+③PreparedStatement: 继承自Statement接口,表示预编译的sql语句对象,用于执行带 ? 占位符的sql语句.通过Connection的prepareStatement方法获取
+④CallableStatement: 用于执行sql存储过程的接口,就是执行数据库中本身自己的操作方法
+ResultSet: 结果集,包含了select语句查询得到的数据,包含两部分
+第一部分: ResultMetaData,可用于获取相关ResultSet对象的列的类型和属性的类,不管是否查到数据都有列信息
+getColumnCount():获取列的总数;
+getColumnName():获取实际的列名
+getColumnLabel():获取列名,如果查询语句中对列起了别名,那么获取到的便是别名.
+第二部分:数据,一个二维表
+
+2.Oracle数据类型与java数据类型的对应关系
+①char---String
+②varchar2---String
+③number(n)---int, long...
+④number(n, m)---double
+⑤date---java.sql.date
+
+3.jdbc中的事务
+如果一个事务由多个SQL语句构成,由于工具类中每次操作都会创建一个新的Connection连接对象,每个操作使用的都是自己的连接,则无法统一管理,所以一个事务中包含多个操作时要求使用的Connection连接对象是同一个
+a)操作方式
+①事务开始前取消Connection的默认提交行为: 调用Connection对象的setAutoCommit(false)把自动提交设为false关闭自动提交
+②如果操作都成功了,这时才调用Connection对象的commit()方法进行提交
+③如果出现异常,则在catch块中调用Connection对象的rollback()方法进行回滚.

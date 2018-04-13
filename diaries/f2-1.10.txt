@@ -1,0 +1,43 @@
+创建时间：	2018/1/16 星期二 下午 9:17
+
+一.HTTP请求
+1.HttpServletRequest对象
+a)主要作用:
+①提取客户端请求信息,比如客户端表单信息,HTTP请求报头信息以及cookie
+②资源转发: getRequestDispatcher("url").forward(request,reponse)
+在服务器内部完成,可以访问在WEB-INF下的资源
+③修改字符集:setCharacterEncoding("encoding");
+b)获取请求信息的方法
+①Enumeration getParameterNames():获取请求中所有参数名的集合
+②Map<String, String[]> getParameterMap():以键值对的形式存储表单中的参数名和参数值
+③String getMethod():获取HTTP请求方法
+④String getRemoteAddr():获取客户端的IP
+⑤getReader()或getInputSteam()方法用于读取那些不是表单提交或是来自于上载的文件,比如<input type="file">
+2.HTTP响应码
+a)1xx:表示请求受到,继续处理
+b)2xx:表示请求成功
+c)3xx:重定向
+d)4xx:客户端错误,400-403为权限错误, 404-414为文件丢失错误
+e)5xx:服务器错误
+3.HttpServletResponse对象
+a)作用
+①设置响应字符集:setCharacterEncoding("encode")
+②向客户端输出信息:DHTML,数据,二进制文件,Cookie,XML
+③请求重定向:sendRedirect("url")
+b)响应
+①setContentType("type"):设置输出内容类型
+Excel表格:application/vnd.ms-excel
+HTML: text/html
+XML: text/xml
+纯文本: text/plain
+图片: image/图像格式
+Word文档: application/msword
+json : application/json
+②PrintWriter getWriter():返回可以向客户端发送字符数据的对象
+③ServletOutputStream getOutputStream():返回可以向客户端发送二进制数据的输出流对象
+④addCookie(Cookie):向响应报头插入一个cookie,可以插入多个
+二.Servlet配置
+web.xml文件中的配置
+1.<servlet>节点下
+a)<init-param>:定义servlet的初始化参数,可以有多个,该节点下有两个节点: <param-name>和<param-value>,这两个子节点都只能有一个,可以通过ServletConfig对象的getInitParameter("param-name")获取
+b)<load-on-startup>:决定web应用启动时装载Servlet的顺序,当该值为正数或零时,Servlet容器会优先加载该值小的servlet,如果设置为负数或不设定,那么web容器会在用户首次访问这个servlet时才加载它

@@ -1,0 +1,20 @@
+创建时间：	2017/11/6 星期一 下午 6:28
+
+一.数组的逆序存放
+    即将元素对调,第一个和最后一个对调,对调的元素存在如下关系:索引为 i 的元素与索引为 数组长度-1-i 的元素对调,且对调次数等于数组的长度除以2
+    for (int i = 0; i < array.length / 2; i++) {
+        int temp = nums[array.length - 1 - i];
+        nums[array.length - 1 - i] = nums[i];
+        nums[i] = temp;
+    }
+
+二.将一个数组中的重复元素之保留一个其他的替换为0
+每次比较都是从该元素的索引+ 1 开始比较的
+    for (int i = 0; i < array.length; i++) {
+        for (int j = i + 1; j < array.length; j++) {
+            if (array[i] == array[j]) {
+                array[j] = 0;
+            }
+        }
+    }
+    

@@ -1,0 +1,93 @@
+创建时间：	2018/3/29 星期四 下午 9:47
+
+ 一.Mybatis配置
+
+<environments default="development"> //默认使用的环境environment的id
+    <environment id="development">
+        <transactionManager type="JDBC"> //JDBC表示使用jdbc的默认设置，MANAGED表示被托管，不提交不会滚，由容器来管理,默认它会关闭连接
+            //设置closeConnection属性为false可以组织其自动关闭
+            <property name="closeConnection" values="false"/>
+        </transactionManager>   
+        <dataSource type="POOLED">
+            <property name="driver" value="${driver}"/>
+            <property name="url" value="${url}"/> //出现乱码在url后拼接 ?useUnicode=true&amp;characterEncoding=utf8   p.s.&amp;代表在XML文件中&的转义
+            <property name="username" value="${username}"/>
+            <property name="password" value="${password}"/>
+        </dataSource>
+    </environment>
+    //别名配置
+    <typeAliases>
+        ①<typeAlias alias="别名" type="全类名"/> 
+        ②<package name="包名"/> //会扫描包下的所有bean并使用其首字母小写的类名作为别名
+        //mybatis内置类一些java类型别名， 基本类型为 _基本类型名， 基本类型的包装类型及其集合类型等为 全部小写的名字作为别名
+    </typeAliases>
+    <mappers>
+        ①<mapper resource="类路径下映射文件的位置"/>
+        ②<package name="包名"/>  //将包内所有接口注册为映射器
+    </mappers>
+</environments>
+
+二.Mapper XML文件
+1.select标签：查询语句
+属性参数：①parameterType：传入这条SQL语句的参数的全类名或别名
+                 ②resultType：预期返回的类型的全类名或别名，如果是集合的话，属性值为集合中元素的类型
+                 ③resultMap：外部resultMap的命名的引用
+                 ④flushCache：为true时任何时候调用该语句都会清空本地缓存以及二级缓存，默认为false
+                 ⑤useCache：设置为true时将会导致本条语句的结果被二级缓存，默认对select元素为true
+                 ⑥statementType：STATEMENT，PREPARED，CALLABLE中的一个，这条语句编译的类型，默认为PREPARED，当调用存储过程时需指定为CALLABLE
+2.insert，update， delete标签：插入/更新/删除语句
+属性参数：①flushCache：语句被调用时情况本地缓存以及二级缓存，插入，更新，删除语句都默认为true
+                 ②useGeneratedKeys：（仅对insert和update有用），会让MyBatis使用jdbc的getGeneratedKeys方法来取出数据库内部自动生成的主键值，例如mysql 的auto_increment，默认为false
+                 ③keyProperty：（仅对insert和update有用），Mybatis会通过getGeneratedKeys的返回值或者insert元素的子元素selectKey设置该列的值，该属性的值为表中主键的列名
+子元素selectKey属性：①keyProperty：selectKey语句结果要设置的属性的属性名
+                                    ②resultType：语句预期的返回类型
+                                    ③order：值为BEFORE或AFTER，为BEFORE会先执行selectKey的语句并将其值赋给keyProperty再执行插入语句；设置为AFTER会先执行插入语句，再执行selectKey的语句
+                                    ④statementType：同上
+3.sql：用于定义可重用的SQL片段
+①定义：<sql id=""> ${变量名} </sql> //定义这种属性名后当被其他元素引用时，引用时可以设置该变量的实际值,同时这种变量的声明也可以放在include元素的refid属性里。
+② 引用：其它元素(insert,update,delete,update,sql元素都可以)引用SQL片段时通过在元素内部添加<include refid="被引用的sql片段的id">子元素来实现，同时可以在include子元素中添加property子元素为SQL片段里的变量名赋值, <property name="SQL片段内部变量的变量名" value="" />
+4.parameterType
+①当传入一个复杂对象属性时，SQL语句中 #{属性名} 占位符的值会从传入的对象中根据其属性名进行寻找并赋给预处理语句的参数中，map集合也是如此
+②可以指定占位符属性的数据类型， #{属性名, javaType=java数据类型, jdbcType=数据库数据类型}, 通常javaType可以由参数对象确定。
+③对于小数类型，可以设置小数保留位数，比如 #{length, javaType=double, jdbcType=NUMERIC, numericScale=2}
+④mode属性可以指定IN，OUT，INOUT参数
+5.字符串替换：使用#{ }会被转义为 ？,但使用 ${ }不会被修改转义
+6.resultMap元素的高级结果映射
+①自身属性：a）id：该resultMap的id，用于引用
+                    b）type：类型全类名或类型别名
+                    c）autoMapping：开启自动映射，默认为false
+②子元素
+a）id和result：两者都能将列值映射到一个简单数据类型的属性，不过id是表示标识属性，result是表示普通属性
+    属性：i）.property：被映射的属性名
+              ii）：column：数据库中的列名
+b）association：将某一复杂数据类型结果映射到一个属性中
+    属性：i) property：对应的属性名   
+              ii) column：数据库中的列名  
+              iii) javaType：数据类型
+              iv) select：外部select语句的id，将其查询结果作为该属性的值
+              v) resultMap：外部resultMap的id，引用其他结果映射作为该属性的值
+              vi) columnPrefix：为引用的外部resultMap中的所有column列名添加前缀
+    子元素：<id /> <result />
+c）集合collection
+    属性：i) ofType：每个数据的类型
+              其余属性与association一致
+三.动态SQL
+1.if：<if test="条件判断表达式"> ... </if>
+2.choose,when,otherwise
+3.where：where元素只会在至少有一个子元素会返回SQL语句时才会去插入 where，且如果返回的语句开头是 AND或者 OR会将其剔除
+4.set：set元素会动态的给SQL语句前置一个SET，并会剔除无关的逗号
+5.foreach
+属性：①item：其值代表着本次迭代获取的元素，当遍历Map集合时，为value值
+          ②index：当前迭代的次数，当遍历Map集合时，为key值
+          ③collection：遍历的集合的数据类型
+          ④open：以什么字符开始
+          ⑤separator：间隔符，每次迭代后拼接的间隔符
+          ⑥close：以什么字符结束
+四.缓存
+1.一级缓存（本地缓存Local Cache）:每当一个SqlSession被创建，mybatis就会创建一个与之关联的本地缓存，任何在该SqlSession执行过的查询语句的结果都会被保存到本地缓存中，本地缓存会被增删改，提交事务，关闭事务以及关闭SqlSession所清空。
+2.二级缓存（Second Cache）：存储作用域为Mapper
+①开启：在mybatis配置文件的configuration元素的子元素settings中添加<setting name="cacheEnabled" value="true"/>,并在Mapper的xml文件中的mapper元素中添加<cache/>子元素，且POJO类必须实现序列化接口
+②设置select元素的useCache属性可以禁用当前select语句的二级缓存，即每次查询都会发出SQL去查询，默认为true。
+③在mapper的同一namespace下，如果有其他增删改操作数据后需要刷新缓存，不然会出现脏读，默认为true，即会刷新缓存
+五.注意事项
+1.当接口中的参数只有一个且类型为List或数组时，在xml文件中使用foreach时其collection属性分别为list和array，如果为Map集合则必须在接口的形参上为该参数加上@Param("name")注解,此时foreach的collection的属性为就为name，List集合或数组也可以用注解的形式标注。多个参数时应使用map集合存放

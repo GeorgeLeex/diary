@@ -1,0 +1,14 @@
+创建时间：	2018/1/14 星期日 上午 11:33
+
+一.继承
+a)当往一个函数的prototype对象属性上添加属性时,通过new出来的对象都能访问这些属性,而当一个函数a的prototype属性等于另一个函数b的prototype属性时,通过a函数所构建的对象也可以访问b函数上的属性,即达成继承.可以把a函数的prototype属性的constructor属性设为a,否则会因为继承而使其指向b的构造函数
+例子:
+Student.prototype = Object.create(Person.prototype);
+Student.prototype.constructor = Student;
+b)使用Object.create()函数是因为当直接使Student.prototype=Person.prototype时,对Student的属性扩展会影响到Person,且使用create函数可以使Student.prototype对象属性是一个空的且原型是指向Person.prototype的属性,不会直接拥有Person.prototype上的属性.
+c)为Student.prototype添加与Person.prototype同名的属性会覆盖Person.prototype中的属性, 因为如果在Student.prototype中找到了该属性便不会再沿着原型链往上找,可以这样实现方法的重写
+d)另一种继承方式 Student.prototype = new Person();
+new Person()所构建的对象的原型_proto_指向Person的prototype,所以将其赋值给Student.prototype也是可以的
+二.原型链
+a)并不是所有的对象的原型链上都有Object.prototype, 比如Object.create(null) 传入一个null所返回的对象其原型链上没有Object.prototype,没有任何方法 另一种方式比如 函数名,bind(null) 这种方式所返回的函数对象没有prototype属性
+b)当修改一个函数的prototype上的属性的值时,会使所有实例对象受到影响, 而当修改函数的prototype的值时,只有修改以后实例化的对象会受到影响.

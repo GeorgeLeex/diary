@@ -1,0 +1,24 @@
+创建时间：	2018/1/19 星期五 下午 9:16
+
+一.数据库分页top-n
+1.原理
+a)内层查询所有满足条件的数据,并排序
+b)第二层给查询的数据每一行添加一个rownum伪列,同时给rownum设置上限rownum<=?,注意这里只能用rownum而不能用rownum的别名
+c)最外层给rownum设置下限,此时可以用别名
+2.规律
+a)知道需要分几页, 总条数/每页的条数再使用ceil函数向上取整即可取得
+select ceil(count(*)/每页条数) from table
+b)上限,下限与查询的页数和每页条数的关系
+①上限=要查询的页数*每页条数
+②下限=(要查询的页数-1)*每页条数
+二.实现数据导出为Excel
+1.导入poi的jar包
+2.代码编写
+a)new的方式创建一个HSFFWorkbook对象,工作簿对象
+b)工作簿对象.createSheet()方法创建返回一个HSSFSheet对象,sheet页对象
+c)sheet页对象.createRow(int index)根据传入索引创建返回HSFFRow对象,行对象
+d)行对象.createCell(int index)根据索引创建返回一个HSFFCell对象, 列对象
+e)调用列对象的setCellValue()方法设置列的值
+f)数据填充完后调用工作簿对象的write()方法,传入HttpServletResponse对象的输出流对象作为参数,要求该response对象设置如下:
+response.setContentType("application/vnd.ms-excel;charset=UTF-8");
+response.setHeader("content-disposition", "attachment;filename=文件名.xls");

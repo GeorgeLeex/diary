@@ -1,0 +1,46 @@
+创建时间：	2017/11/23 星期四 上午 9:18
+
+一.set集合
+    1.set集合的遍历
+    先转为数组再遍历
+    a)没有泛型的情况下: Object objs = set.toArray();
+    b)转为对应类型的数组:
+    Set<Integer> set = new HashSet<Integer>();    
+    Integer[] i1 = new Integer[1];//作为转型的参考模板
+    Integer[] i2 = set.toArray(i1);//传入一个模板使其转型成对应类型的数组    
+    c)for Each增强for循环遍历
+    2.set集合的add方法添加数据实际上是在map集合里把该数据作为key,map集合底层是用一个table数组保存数据,默认初始容量为16,默认负载因子为0.75,四分之一作为缓冲区,当容量不够时,便回进行扩容,扩大为原容量的两倍
+
+二.list集合
+    1.ArrayList: 使用Object数组存放数据,默认初始容量为10,每当数组无法存放下数据时,便会进行扩容,扩大为原长度的1.5倍
+    通过ArrayList的无参构造方法创建的集合对象默认为空数组,容量为0
+    通过ArrayList的带参构造方法可以传入一个长度设定初始容量
+    2.LinkedList
+    LinkedList的addFirst,addLast等方法是子类自己扩展的方法,所以一般使用LinkedList时不使用父类或接口的引用,而是直接创建LinkedList的引用
+    LinkedList主要用于模拟数据结构,模拟栈和队列
+    栈存放数据的格式是先进后出
+    添加数据,又称为入栈(压栈),
+    读取数据为出栈,每次只能从栈顶获取数据,当读完一个数据后,该数据就从栈中移除了
+    队列存放数据是先进先出
+    3.ArrayList和LinkedList的区别
+    ①ArrayList基于数组,LinkedList基于链表
+    ②ArrayList的随机访问效率比LinkedList高
+    ③ArrayList的插入删除效率比LinkedList低
+    ④LinkedList的方法比ArrayList多6个,多了对First和Last的增查删操作
+三.集合中存放的是各种对象，只能把基本类型进行自动装箱，不会做类型升级
+     subList():只是获取原始集合中部分数据的视图，操作的依然是原始集合,会出现并发修改异常
+     add():把一个整体添加到集合中,作为一个元素使用.
+     addAll():把一个集合中的所有元素添加至该集合中
+     引用数据类型在进行比较时需要实现comparable接口并重写compareTo方法,然后在重写的方法中编写相应的比较规则,通常,返回值大于0表示该对象比比较的对象大,如果小于0则表示该对象比 比较的对象小,否则就是相等
+     字符串进行类型比较的话,直接使用String中已经重写的compareTo方法即可,比较时忽略大小写的比较方法--               compareToIgnoreCase
+四,Map
+    如果Map中的key重复,后添加的数据会覆盖以前的数据
+    HashMap中key可以为null,且只能有一个
+    TreeMap中key不能为null
+    HashMap与TreeMap的区别
+    1.HashMap基于hash表,TreeMap基于平衡树
+    2.HashMap可以自己设置初始容量与负载因子,TreeMap无法设置
+    3.HashMap的执行效率高于TreeMap
+    4.HashMap的key可以为null,有且只能有一个
+       TreeMap的key不能包含null值
+    增强for循环遍历map集合只适用于泛型集合

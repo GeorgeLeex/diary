@@ -1,0 +1,60 @@
+创建时间：	2018/4/3 星期二 下午 9:26
+
+一.@RequestMapping注解
+1.直接在类或方法上使用且类上没有该注解时表示请求路径相对于根目录
+2.方法上有且类上也有该注解时，方法上的路径是相对于类上的
+3.属性
+a）value：表示请求路径，只有该属性时可以不指定属性名直接填值，支持Ant风格的URL，？表示一个字符，*表示任意字符，**匹配多层路径
+b）method：HTTP请求类型，值为枚举RequestMethod，比如RequestMethod.GET，RequestMethod.PUT
+c）params：表示对请求参数的限定，支持简单的表达式，比如要求请求中的包含什么参数 params={"username","password"}, 不含什么参数 {"!sex"} 参数为什么值 {"username=lee"}
+d）headers：表示对请求头中参数的限定，与params类似
+二.@PathVariable注解
+1.请求路径中可以使用占位符的格式将路径的一部分变为变量，而PathVariable注解可以将那些变量的实际值传入方法的入参处
+比如请求路径 @RequestMapping（"{id}/login"）,此时可以给参数列表的参数使用@PathVariable（"变量名"）注解将其实际值与被该注解修饰的参数绑定
+三.REST风格的请求路径
+1.REST风格下常用的请求方式的含义：
+a）GET：获取    b）POST：更新或添加    c）PUT：添加    d）DELETE：删除
+浏览器form表单默认值支持GET请求与POST请求，要想使用其它请求需要在web.xml文件下配置一个spring提供的过滤器-HiddenHttpMethodFilter，这个过滤器可以将POST请求转换为其它请求，内部实现是通过获取请求参数 _method的值，根据其值将请求转换为指定的请求，所以可以在form表单中添加一个隐藏域<input type="hidden" name="_method" value="PUT">
+四.@RequestParam注解
+1.修饰参数列表的参数使其与请求数据绑定
+2.属性
+a）value：属性名    
+b）require：默认情况修饰了该注解的参数不能为空，如果请求参数中不包含该值则会报异常；将其设为false时若没有指定参数则会将一个null值赋给被绑定的参数，但如果被绑定的参数不接受null值（比如int类型）则也会异常，此时可以用包装类型
+c）defaultValue：默认值，当请求参数中不包含指定值时会将该值赋给被绑定的参数
+3.使用javabean作为方法入参接收数据时，会自动将请求中的数据添入bean中名字与之对应的属性，可以级联的为属性赋值，比如当一个bean中关联了另一个bean时，为另一个bean的属性自动赋值要求前端数据名为 bean名字.属性名
+五.@SessionAttributes注解
+将隐含的Model中的数据放入session域
+属性：a）values：Model中那些要添入session域中的数据的名字
+          b）types：Model中那些要添入session域中的数据的类型
+
+六.@ModelAttribute注解
+1.所有的标注了@ModelAttribute的方法都会在@RequestMapping方法之前被调用
+注解了@ModelAttribute方法的执行流程
+a）首先调用@ModelAttribute标注的方法，然后将Model中数据放在implicitModel中
+b）解析请求所对应的方法的入参，其入参来自WebDataBinder对象的target属性
+①WebDataBinder对象的创建需要两个属性
+i）objectName：使用该值与到时候要传入到方法入参的实际值相绑定，若方法入参使用了@ModelAttribute标注，则objectName为其注解的value属性，若没有标注，则默认为类名首字母小写后的字符串
+ii）target：若implicitModel存在objectName这个key，则target为implicModel中该key对应的value值；若不存在，则验证当前handler是否使用了@SessionAttributs注解，若使用了且包含了objectName则会往session中获取objectName对应的value值，获取不到会报异常；如果当前handler也没使用@SessionAttributes注解，则会通过反射创建对应的对象
+c）springMVC将表单中的数据赋给WebDataBinder对象的target属性对应的对象
+d）springMVC将WebDataBinder对象的objectName和target属性放入implicitModel中，方便将其传入request域
+e）springMVC将WebDataBinder对象的target属性的值作为参数传递给方法的入参
+
+2.修饰有返回值的方法时，表明将该方法的返回值添入model中，如果没有为该值指定名称的话，隐式的会将名称设为该返回值类型的小写
+3.当该注解修饰的方法同时被@RequestMapping修饰的话，此时方法的返回值会被作为model的一个属性，而不是视图名
+4.往model中添入数据还可以在方法参数列表中添加一个Model类型的参数
+
+七.通常页面都是放在WEB-INF下，只能通过控制器转发，无法直接访问，此时可以在spring配置文件下添加<mvc:view-controller path="访问路径" view-name="视图名，无需添加前缀后缀"/>就可以直接通过访问路径访问到视图，而不用经过控制器，当使用了该标签时，需要同时添加了<mvc:annotation-dirven/>标签，否则会导致其它访问映射出现问题
+
+八.视图：渲染模型数据，将模型里的数据以某种形式展现给前端
+常见的视图实现类
+1.InternalResourceView：将jsp或其它资源封装为一个视图，InternalResourceViewResolver的默认实现类
+2.AbstractXlsView/AbstractXlsxView：Excel文档视图的抽象类，基于POI构造Excel文档，需要导入POI的jar包，然后自定义bean继承该抽象类实现buildExcelDocument方法，利用模型数据和WorkBook对象构建Excel文档，若想要使其可以下载，需将响应头的Content-Disposition属性设为attachment;filename=xxx.xls 即调用方法入参中的HTTPServletResponse对象的setHeader方法。需要使用BeanNameViewResolver解析器
+3.AbstractPdfView：PDF文档视图的抽象类，基于iText构建PDF文档
+4.MappingJackson2JsonView：将模型数据通过Jackson框架一个json格式输出
+
+九.常用的视图解析器实现类
+视图解析器用于将视图逻辑解析为一个具体的视图对象
+1.InternalResourceViewResolver：将视图名解析为一个URL文件，一般用于映射jsp等文件
+2.BeanNameViewResolver：将视图名解析为一个bean的id，如果对应id的bean实现类View接口且在spring容器注册了，则表示以该bean渲染视图
+3.JasperReportsViewResolver：JasperReports是一个基于Java的开源报表工具，该解析器将视图名解析为报表文件对应的URL
+多种视图解析器可以混合使用，每个视图解析器都实现了一个Ordered接口并开放了order属性，可以通过指定视图解析器的order属性值来指定解析的优先级，order值越小优先级越高，springMVC会根据优先级顺序对视图名进行解析，一般建议使用频率低的视图解析器的优先级设置高一点.
