@@ -1,0 +1,10 @@
+一.Mock测试:模拟web请求
+1.在测试类上标注@WebAppConfiguration, @RunWith(), @ContextConfiguration注解,@ContextConfiguration注解的locations属性需要两个值,
+  spring的配置文件路径以及SpringMVC配置文件的路径
+2.添加成员变量WebApplicationContext并添加@AutoWired注解
+3.为MocMvc对象进行初始化, MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(WebApplicationContext对象).build();
+4.MockMvc对象的perform方法需要传入一个MockHttpServletRequestBuilder对象,该对象需要通过MockMvcRequestBuilders的get或post方法获取,
+  不同方法表示不同类型的请求,但这些方法都需要传入一个字符串的uri,表示请求路径;
+  MockHttpServletRequestBuilder对象的param方法的参数表示此次请求所传递的参数.
+5.perform方法依然返回MockMvc对象,其andReturn方法返回MvcResult对象,该对象包含了此次请求的结果,
+  其getRequest方法可以返回一个MockHttpServletRequest对象,通过该对象可以得到request域中的数据
